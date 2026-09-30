@@ -2,7 +2,7 @@
 " Vimore
 " 作者: BiaoZyx
 " 邮箱: BiaoZyx@outlook.com
-" 版本: 3.14.1
+" 版本: 3.14.3
 " ============================================================
 "  _   ___
 " | | / (_)_ _  ___  _______
@@ -1266,24 +1266,23 @@ let g:leader_menu = {
         \ 'e': ['编辑配置',       ':e $MYVIMRC<CR>'],
     \ },
     \ '/':  ['注释/取消注释',     function('ToggleComment')],
-    \ 'd':  {
-        \ 'name': '删除',
-        \ 'd': ['删除空行',       ':silent! g/^\s*$/d<CR>'],
-        \ 'a': {
-            \ 'name': '删除括号对及其内容',
+    \ 'b':  {
+        \ 'name': '括号',
+        \ 'd': {
+            \ 'name': '删除指定括号对及其内容',
             \ '(': ['圆括号',  ':call DeleteEnclosingPair("(")<CR>'],
             \ '[': ['方括号',  ':call DeleteEnclosingPair("[")<CR>'],
             \ '{': ['花括号',  ':call DeleteEnclosingPair("{")<CR>'],
-            \ '"': ['双引号',  ":call DeleteEnclosingPair('\"')<CR>"],
-            \ "'": ['单引号',  ":call DeleteEnclosingPair('''')<CR>"],
+            \ '"': ['双引号',  ':call DeleteEnclosingPairCode(34)<CR>'],
+            \ "'": ['单引号',  ':call DeleteEnclosingPairCode(39)<CR>'],
         \ },
-        \ 'p': {
-            \ 'name': '仅删除括号对',
-            \ '(': ['圆括号',  ':call DeletePairOnly("(")<CR>'],
-            \ '[': ['方括号',  ':call DeletePairOnly("[")<CR>'],
-            \ '{': ['花括号',  ':call DeletePairOnly("{")<CR>'],
-            \ '"': ['双引号',  ":call DeletePairOnly('\"')<CR>"],
-            \ "'": ['单引号',  ":call DeletePairOnly('''')<CR>"],
+        \ 'a': {
+            \ 'name': '在可视选区外添加指定括号',
+            \ '(': ['圆括号',  ':call AddPair("(")<CR>'],
+            \ '[': ['方括号',  ':call AddPair("[")<CR>'],
+            \ '{': ['花括号',  ':call AddPair("{")<CR>'],
+            \ '"': ['双引号',  ':call AddPairCode(34)<CR>'],
+            \ "'": ['单引号',  ':call AddPairCode(39)<CR>'],
         \ },
     \ },
     \ 'r':  ['查看寄存器',        ':reg<CR>'],
@@ -1298,6 +1297,7 @@ let g:leader_menu = {
     \ 'P':  ['从系统剪切板粘贴(前)', ':normal! "+P<CR>'],
     \ 's':  {
         \ 'name': '整理',
+        \ 'd': ['删除空行',       ':silent! g/^\s*$/d<CR>'],
         \ 's': ['排序选中行',     ':sort<CR>'],
         \ 'u': ['去重排序',       ':sort u<CR>'],
         \ 'n': ['数字排序',       ':sort n<CR>'],
@@ -1327,13 +1327,14 @@ let g:leader_menu = {
         \ 'l': ['列出标签',       ':tabs<CR>'],
         \ 'u': ['恢复关闭标签',   ':tabnew #<CR>'],
         \ 'd': ['新标签打开目录', ':tabnew .<CR>'],
-        \ 'f': ['查找文件',       ':tabfind *<CR>'],
+        \ 'f': ['文件浏览器',     ':Explore<CR>'],
+        \ 'F': ['垂直文件浏览器', ':Vexplore<CR>']
     \ },
 \ }
 
 " === 依赖函数 ===
-" Leader d a/p
-" 删掉光标所在的整对括号及其内容，支持 () [] {} <> "" ''
+" == Leader b ==
+" 删掉光标所在的整对括号及其内容
 function! DeleteEnclosingPair(left)
     let pairs = {'(' : ')', '[' : ']', '{' : '}', '"' : '"', "'" : "'"}
     if !has_key(pairs, a:left)
@@ -1352,62 +1353,46 @@ function! DeleteEnclosingPair(left)
     call cursor('.', start_pos + 1)
 endfunction
 
-function! DeletePairOnly(left)
-    let pairs = {'(' : ')', '[' : ']', '{' : '}', '"' : '"', "'" : "'"}
-    if !has_key(pairs, a:left)
-        echo "不支持的括号: " . a:left
-        return
-    endif
-    let line = getline('.')
-    let col = col('.') - 1
-    let enclosing = s:find_enclosing_of(col, a:left, pairs[a:left])
-    if enclosing == []
-        echo "光标不在 " . a:left . pairs[a:left] . " 内"
-        return
-    endif
-    let [start_pos, end_pos] = enclosing
-    call setline('.', line[:start_pos-1] . line[start_pos+1:end_pos] . line[end_pos+1:])
-    call cursor('.', start_pos + 1)
+function! DeleteEnclosingPairCode(code)
+    call DeleteEnclosingPair(nr2char(a:code))
 endfunction
 
-" 找包含光标位置的、指定类型的最近一对括号
-function! s:find_enclosing_of(col, left, right)
-    let line = getline('.')
-    let pos = a:col - 1
-    while pos >= 0
-        if line[pos] == a:left
-            let end_pos = s:find_matching_right(pos, a:left, a:right)
-            if end_pos != -1 && end_pos >= a:col
-                return [pos, end_pos]
-            endif
-        endif
-        let pos -= 1
-    endwhile
-    if a:col < len(line) && line[a:col] == a:left
-        let end_pos = s:find_matching_right(a:col, a:left, a:right)
-        if end_pos != -1
-            return [a:col, end_pos]
-        endif
+" 给可视选区加括号
+function! AddPair(pair)
+    let map = {'(' : ')', '[' : ']', '{' : '}', '"' : '"', "'" : "'"}
+    if !has_key(map, a:pair)
+        echo "不支持的括号: " . a:pair
+        return
     endif
-    return []
+    let left = a:pair
+    let right = map[left]
+
+    let start_pos = getpos("'<")
+    let end_pos = getpos("'>")
+    if start_pos[1] == 0 || end_pos[1] == 0
+        echo "没有可视选区"
+        return
+    endif
+
+    let start_line = start_pos[1]
+    let end_line = end_pos[1]
+    let start_col = start_pos[2]
+    let end_col = end_pos[2]
+
+    if start_line == end_line
+        let line = getline(start_line)
+        let new_line = line[:start_col-2] . left . line[start_col-1:end_col-1] . right . line[end_col:]
+        call setline(start_line, new_line)
+    else
+        let first = getline(start_line)
+        let last = getline(end_line)
+        call setline(start_line, first[:start_col-2] . left . first[start_col-1:])
+        call setline(end_line, last[:end_col-1] . right . last[end_col:])
+    endif
 endfunction
 
-function! s:find_matching_right(start, left, right)
-    let line = getline('.')
-    let pos = a:start + 1
-    let cnt = 1
-    while pos < len(line)
-        if line[pos] == a:left
-            let cnt += 1
-        elseif line[pos] == a:right
-            let cnt -= 1
-            if cnt == 0
-                return pos
-            endif
-        endif
-        let pos += 1
-    endwhile
-    return -1
+function! AddPairCode(code)
+    call AddPair(nr2char(a:code))
 endfunction
 
 " === 菜单引擎 ===
@@ -1423,11 +1408,11 @@ function! s:RenderMenu(menu, prefix)
         let item = a:menu[k]
         if type(item) == v:t_dict
             " 子菜单：顶层显示 <名字>，子菜单内只显示键
-            if a:prefix == ''
+            if type(item) == v:t_dict
                 let name = has_key(item, 'name') ? item['name'] : k
                 call add(sub_lines, printf(' %-6s <%s>', k, name))
             else
-                call add(sub_lines, printf(' %-6s', k))
+                call add(lines, printf(' %-6s %s', k, item[0]))
             endif
         else
             " 叶子节点：顶层带前缀，子菜单内不带
@@ -1461,6 +1446,12 @@ endfunction
 
 " 主提示循环
 function! s:LeaderPrompt()
+    let save_mode = mode()
+    let save_visual = (save_mode == 'v' || save_mode == 'V' || save_mode == "\<C-v>")
+    let save_start = getpos("'<")
+    let save_end = getpos("'>")
+    let save_cur = getpos('.')
+
     let menu = g:leader_menu
     let prefix = ''
 
@@ -1528,3 +1519,11 @@ function! s:LeaderPrompt()
 endfunction
 
 nnoremap <silent> <Leader> :call <SID>LeaderPrompt()<CR>
+xnoremap <silent> <Leader> :<C-u>call <SID>LeaderPrompt()<CR>
+
+" 可视模式：给选区加括号
+xnoremap <silent> <Leader>b( <Esc>`>a)<Esc>`<i(<Esc>
+xnoremap <silent> <Leader>b[ <Esc>`>a]<Esc>`<i[<Esc>
+xnoremap <silent> <Leader>b{ <Esc>`>a}<Esc>`<i{<Esc>
+xnoremap <silent> <Leader>b" <Esc>`>a"<Esc>`<i"<Esc>
+xnoremap <silent> <Leader>b' <Esc>`>a'<Esc>`<i'<Esc>

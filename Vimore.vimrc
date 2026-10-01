@@ -2,7 +2,7 @@
 " Vimore
 " 作者: BiaoZyx
 " 邮箱: BiaoZyx@outlook.com
-" 版本: 3.14.4
+" 版本: 3.15
 " ============================================================
 "  _   ___
 " | | / (_)_ _  ___  _______
@@ -590,11 +590,40 @@ function! s:find_enclosing(col, pairs, reverse)
     return []
 endfunction
 
+" 找包含光标位置的、由指定左右符号围起来的最近一对
+function! s:find_enclosing_of(col, left, right)
+    let line = getline('.')
+    let pos = a:col - 1
+    while pos >= 0
+        if line[pos] == a:left
+            if a:left == a:right
+                " 引号类不嵌套：向右找下一个同款即为结束
+                let end_pos = -1
+                let p = pos + 1
+                while p < len(line)
+                    if line[p] == a:left
+                        let end_pos = p
+                        break
+                    endif
+                    let p += 1
+                endwhile
+            else
+                let end_pos = s:find_matching_right(pos, a:left, a:right)
+            endif
+            if end_pos != -1 && end_pos >= a:col
+                return [pos, end_pos]
+            endif
+        endif
+        let pos -= 1
+    endwhile
+    return []
+endfunction
+
 " ============================================================
 " 9. 复制粘贴 (手动切换内置/系统寄存器)
 " ============================================================
 " 复制到系统剪切板：<Leader>y
-nnoremap <Leader>y "+y
+nnoremap <Leader>y "+yy
 vnoremap <Leader>y "+y
 
 " 从系统剪切板粘贴：<Leader>p / <Leader>P
@@ -693,7 +722,7 @@ tnoremap <Esc> <C-\><C-n>
 tnoremap <C-c> <C-\><C-n>
 
 " 终端复制（退出终端模式后复制到系统剪切板）
-tnoremap <C-S-c> <C-\><C-n>"+yi
+tnoremap <C-S-c> <C-\><C-n>"+yy
 tnoremap <C-S-v> <C-\><C-n>"+pi
 
 function! OpenTerminal(direction)
@@ -1102,8 +1131,8 @@ function! s:SetTitle()
         call setline(1, "#!/usr/bin/env python3")
         call append(1, "# -*- coding: utf-8 -*-")
         call append(2, "\"\"\"")
-        call append(3, "@Author: " . author)
-        call append(4, "@Email: " . email)
+        call append(3, "@Author: " . g:author)
+        call append(4, "@Email: " . g:email)
         call append(5, "@Date: " . date)
         call append(6, "@Description: ")
         call append(7, "\"\"\"")
@@ -1116,15 +1145,15 @@ function! s:SetTitle()
         call append(4, "")
     elseif &filetype == 'sh'
         call setline(1, "#!/bin/bash")
-        call append(1, "# Author: " . author)
-        call append(2, "# Email: " . email)
+        call append(1, "# Author: " . g:author)
+        call append(2, "# Email: " . g:email)
         call append(3, "# Date: " . date)
         call append(4, "")
     elseif &filetype == 'c'
         call setline(1, "/*************************************************************************")
         call append(1, " * @file: ".expand("%"))
-        call append(2, " * @author: " . author)
-        call append(3, " * @email: " . email)
+        call append(2, " * @author: " . g:author)
+        call append(3, " * @email: " . g:email)
         call append(4, " * @date: " . date)
         call append(5, " * @description: ")
         call append(6, " ************************************************************************/")
@@ -1139,8 +1168,8 @@ function! s:SetTitle()
     elseif &filetype == 'cpp'
         call setline(1, "/*************************************************************************")
         call append(1, " * @file: ".expand("%"))
-        call append(2, " * @author: " . author)
-        call append(3, " * @email: " . email)
+        call append(2, " * @author: " . g:author)
+        call append(3, " * @email: " . g:email)
         call append(4, " * @date: " . date)
         call append(5, " * @description: ")
         call append(6, " ************************************************************************/")
@@ -1159,8 +1188,8 @@ function! s:SetTitle()
     elseif &filetype == 'java'
         call setline(1, "/*")
         call append(1, " * @file: ".expand("%"))
-        call append(2, " * @author: " . author)
-        call append(3, " * @email: " . email)
+        call append(2, " * @author: " . g:author)
+        call append(3, " * @email: " . g:email)
         call append(4, " * @date: " . date)
         call append(5, " */")
         call append(6, "")
@@ -1174,8 +1203,8 @@ function! s:SetTitle()
     elseif &filetype == 'javascript'
         call setline(1, "/**")
         call append(1, " * @file: ".expand("%"))
-        call append(2, " * @author: " . author)
-        call append(3, " * @email: " . email)
+        call append(2, " * @author: " . g:author)
+        call append(3, " * @email: " . g:email)
         call append(4, " * @date: " . date)
         call append(5, " */")
         call append(6, "")
@@ -1293,7 +1322,7 @@ let g:leader_menu = {
         \ 'a': ['切换折叠',       ':normal! za<CR>'],
         \ 'Z': ['全部展开',       ':normal! zR<CR>'],
     \ },
-    \ 'y':  ['复制到系统剪切板',  ':normal! "+y<CR>'],
+    \ 'y':  ['复制到系统剪切板',  ':normal! "+yy<CR>'],
     \ 'p':  ['从系统剪切板粘贴',  ':normal! "+p<CR>'],
     \ 'P':  ['从系统剪切板粘贴(前)', ':normal! "+P<CR>'],
     \ 's':  {
@@ -1399,12 +1428,14 @@ function! AddPair(pair)
 
     if start_line == end_line
         let line = getline(start_line)
-        let new_line = line[:start_col-2] . left . line[start_col-1:end_col-1] . right . line[end_col:]
+        let prefix = start_col > 1 ? line[:start_col-2] : ''
+        let new_line = prefix . left . line[start_col-1:end_col-1] . right . line[end_col:]
         call setline(start_line, new_line)
     else
         let first = getline(start_line)
         let last = getline(end_line)
-        call setline(start_line, first[:start_col-2] . left . first[start_col-1:])
+        let prefix = start_col > 1 ? first[:start_col-2] : ''
+        call setline(start_line, prefix . left . first[start_col-1:])
         call setline(end_line, last[:end_col-1] . right . last[end_col:])
     endif
 endfunction
@@ -1425,20 +1456,12 @@ function! s:RenderMenu(menu, prefix)
         endif
         let item = a:menu[k]
         if type(item) == v:t_dict
-            " 子菜单：顶层显示 <名字>，子菜单内只显示键
-            if type(item) == v:t_dict
-                let name = has_key(item, 'name') ? item['name'] : k
-                call add(sub_lines, printf(' %-6s <%s>', k, name))
-            else
-                call add(lines, printf(' %-6s %s', k, item[0]))
-            endif
+            " 子菜单：显示键 + <名字>
+            let name = has_key(item, 'name') ? item['name'] : k
+            call add(sub_lines, printf(' %-6s <%s>', k, name))
         else
-            " 叶子节点：顶层带前缀，子菜单内不带
-            if a:prefix == ''
-                call add(leaf_lines, printf(' %-6s %s', k, item[0]))
-            else
-                call add(leaf_lines, printf(' %-6s %s', k, item[0]))
-            endif
+            " 叶子节点
+            call add(leaf_lines, printf(' %-6s %s', k, item[0]))
         endif
     endfor
 
@@ -1464,7 +1487,9 @@ function! s:RunMenuItem(item)
 endfunction
 
 " 主提示循环
-function! s:LeaderPrompt()
+function! s:LeaderPrompt(...)
+    let silent_mode = a:0 > 0 ? a:1 : 0
+
     let save_mode = mode()
     let save_visual = (save_mode == 'v' || save_mode == 'V' || save_mode == "\<C-v>")
     let save_start = getpos("'<")
@@ -1481,39 +1506,44 @@ function! s:LeaderPrompt()
         endif
 
         let title = ' Leader ' . (prefix == '' ? '' : prefix . ' ')
-        " 如果当前菜单有'name'，拼到标题后面
         if has_key(menu, 'name')
             let title .= '- ' . menu['name'] . ' '
         endif
-        let width = 0
-        for l in lines
-            if len(l) > width | let width = len(l) | endif
-        endfor
-        if width < 24 | let width = 24 | endif
 
-        if exists('*popup_create')
-            let winid = popup_create(lines, #{
-                \ line: &lines - len(lines) - 3,
-                \ col: &columns - width - 4,
-                \ minwidth: width + 2,
-                \ maxwidth: width + 2,
-                \ padding: [0, 1, 0, 1],
-                \ title: title,
-                \ })
-            redraw!
+        if !silent_mode
+            let width = 0
+            for l in lines
+                if len(l) > width | let width = len(l) | endif
+            endfor
+            if width < 24 | let width = 24 | endif
+
+            if exists('*popup_create')
+                let winid = popup_create(lines, #{
+                    \ line: &lines - len(lines) - 3,
+                    \ col: &columns - width - 4,
+                    \ minwidth: width + 2,
+                    \ maxwidth: width + 2,
+                    \ padding: [0, 1, 0, 1],
+                    \ title: title,
+                    \ })
+                redraw!
+            else
+                redraw
+                echo title . "\n" . join(lines, "\n")
+                let winid = -1
+            endif
         else
-            redraw
-            echo title . "\n" . join(lines, "\n")
             let winid = -1
         endif
 
-        "let char = nr2char(getchar())
         let char = getcharstr()
 
-        if exists('*popup_close') && winid != -1
+        if !silent_mode && exists('*popup_close') && winid != -1
             call popup_close(winid)
         endif
-        redraw
+        if !silent_mode
+            redraw
+        endif
 
         if char == "\<Esc>"
             return
@@ -1525,6 +1555,10 @@ function! s:LeaderPrompt()
                 let prefix .= char
                 let menu = item
             else
+                " 恢复选区，再执行
+                call setpos("'<", save_start)
+                call setpos("'>", save_end)
+                call setpos('.', save_cur)
                 call s:RunMenuItem(item)
                 return
             endif
@@ -1538,5 +1572,5 @@ function! s:LeaderPrompt()
 endfunction
 
 nnoremap <silent> <Leader> :call <SID>LeaderPrompt()<CR>
-" xnoremap <silent> <Leader> :<C-u>call <SID>LeaderPrompt()<CR>
+xnoremap <silent> <Leader> :<C-u>call <SID>LeaderPrompt(1)<CR>
 

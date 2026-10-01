@@ -2,7 +2,7 @@
 " Vimore
 " 作者: BiaoZyx
 " 邮箱: BiaoZyx@outlook.com
-" 版本: 3.14.3
+" 版本: 3.14.4
 " ============================================================
 "  _   ___
 " | | / (_)_ _  ___  _______
@@ -13,8 +13,16 @@
 " 备注: 普通vim可能剪切板支持不好，建议安装gvim以使用vim
 " ============================================================
 " 记得更改这个，将用于文件头生成
-let author = "BiaoZyx"
-let email  = "BiaoZyx@outlook.com"
+let author = "Change it in ~/.vimrc"
+let email  = "Change it in ~/.vimrc"
+
+" ============================================================
+" 插件设置 (根据需求)
+" ============================================================
+" === ALE(Example) ===
+" let g:ale_linters = {
+    " \ 'sh': ['language_server'],
+    " \ }
 
 " ============================================================
 " 1. 基础设置
@@ -229,10 +237,6 @@ autocmd FileType c,cpp,java,rust setlocal tabstop=4 shiftwidth=4 softtabstop=4 e
 nnoremap <silent> < :<C-u>silent! normal! <<<CR>
 nnoremap <silent> > :<C-u>silent! normal! >><CR>
 
-" 可视模式：缩进选区并保持选中（方便连续缩进）
-vnoremap <silent> < <gv
-vnoremap <silent> > >gv
-
 " ============================================================
 " 6. 搜索与替换
 " ============================================================
@@ -264,12 +268,12 @@ set keymodel=startsel,stopsel
 let &t_SI = "\<Esc>[5 q"
 " 正常模式下设置为闪烁方块 (solid block)
 let &t_EI = "\<Esc>[1 q"
-" 进入选择模式：稳定下划线
-let &t_SS = "\<Esc>[4 q"
+" 进入选择模式：稳定方块
+let &t_SS = "\<Esc>[2 q"
 " 退出选择模式：恢复普通模式方块
 let &t_SE = "\<Esc>[1 q"
-" 进入可视模式：稳定下划线
-autocmd ModeChanged *:[vV\x16]* silent !echo -ne "\e[4 q"
+" 进入可视模式：稳定方块
+autocmd ModeChanged *:[vV\x16]* silent !echo -ne "\e[2 q"
 " 退出可视模式：恢复普通模式方块
 autocmd ModeChanged [vV\x16]*:* silent !echo -ne "\e[1 q"
 set timeoutlen=300   " 缩短普通映射超时（单位毫秒）
@@ -632,11 +636,8 @@ function! GetCommentEndStr()
     return ''
 endfunction
 
-" 空格+/ 注释/取消注释
-nnoremap <silent> <leader>/ :call ToggleComment()<CR>
-vnoremap <silent> <leader>/ :call ToggleCommentVisual()<CR>
-
 function! ToggleComment()
+
     let line = getline('.')
     let comment = GetCommentStr()
     let comment_end = GetCommentEndStr()
@@ -1332,6 +1333,23 @@ let g:leader_menu = {
     \ },
 \ }
 
+" === 可视模式单独快捷键 ===
+xnoremap <Leader>y "+y
+xnoremap <Leader>p "+p
+xnoremap <Leader>P "+P
+xnoremap <silent> <Leader>/ :call ToggleCommentVisual()<CR>
+xnoremap <silent> <Leader>s :sort<CR>
+xnoremap <silent> <Leader>su :sort u<CR>
+xnoremap <silent> <Leader>sn :sort n<CR>
+xnoremap <C-x> "+x
+
+" 缩进
+xnoremap <silent> < <gv
+xnoremap <silent> > >gv
+" 缩进选区并保持选中（方便连续缩进）
+vnoremap <silent> < <gv
+vnoremap <silent> > >gv
+
 " === 依赖函数 ===
 " == Leader b ==
 " 删掉光标所在的整对括号及其内容
@@ -1442,6 +1460,7 @@ function! s:RunMenuItem(item)
     else
         silent execute 'normal! ' . l:Action
     endif
+    redraw
 endfunction
 
 " 主提示循环
@@ -1519,11 +1538,5 @@ function! s:LeaderPrompt()
 endfunction
 
 nnoremap <silent> <Leader> :call <SID>LeaderPrompt()<CR>
-xnoremap <silent> <Leader> :<C-u>call <SID>LeaderPrompt()<CR>
+" xnoremap <silent> <Leader> :<C-u>call <SID>LeaderPrompt()<CR>
 
-" 可视模式：给选区加括号
-xnoremap <silent> <Leader>b( <Esc>`>a)<Esc>`<i(<Esc>
-xnoremap <silent> <Leader>b[ <Esc>`>a]<Esc>`<i[<Esc>
-xnoremap <silent> <Leader>b{ <Esc>`>a}<Esc>`<i{<Esc>
-xnoremap <silent> <Leader>b" <Esc>`>a"<Esc>`<i"<Esc>
-xnoremap <silent> <Leader>b' <Esc>`>a'<Esc>`<i'<Esc>

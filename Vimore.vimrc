@@ -1515,7 +1515,7 @@ function! s:LeaderPrompt()
         endif
         redraw
 
-        if char == "\<Esc>" || char == 'q'
+        if char == "\<Esc>"
             return
         endif
 

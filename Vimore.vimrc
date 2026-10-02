@@ -2,7 +2,7 @@
 " Vimore
 " 作者: BiaoZyx
 " 邮箱: BiaoZyx@outlook.com
-" 版本: 3.16
+" 版本: 3.17
 " ============================================================
 "  _   ___
 " | | / (_)_ _  ___  _______
@@ -21,8 +21,8 @@ let email  = "Change it in ~/.vimrc"
 " ============================================================
 " === ALE(Example) ===
 " let g:ale_linters = {
-    " \ 'sh': ['language_server'],
-    " \ }
+" \ 'sh': ['language_server'],
+" \ }
 
 " ============================================================
 " 1. 基础设置
@@ -195,13 +195,13 @@ set undofile
 
 " 自动创建目录
 if !isdirectory(expand('~/.vim/undodir'))
-  call mkdir(expand('~/.vim/undodir'), 'p')
+    call mkdir(expand('~/.vim/undodir'), 'p')
 endif
 if !isdirectory(expand('~/.vim/backupdir'))
-  call mkdir(expand('~/.vim/backupdir'), 'p')
+    call mkdir(expand('~/.vim/backupdir'), 'p')
 endif
 if !isdirectory(expand('~/.vim/swapdir'))
-  call mkdir(expand('~/.vim/swapdir'), 'p')
+    call mkdir(expand('~/.vim/swapdir'), 'p')
 endif
 
 set undodir=~/.vim/undodir
@@ -439,7 +439,7 @@ function! SmartBackspace()
 
     " 删除成对引号 "" 或 ''
     if (char_before == '"' && char_after == '"') ||
-       \ (char_before == "'" && char_after == "'")
+                \ (char_before == "'" && char_after == "'")
         let before_prev = col > 1 ? line[col - 2] : ''
         let after_next = col + 1 < len(line) ? line[col + 1] : ''
         if before_prev != char_before && after_next != char_after
@@ -462,161 +462,12 @@ function! SmartBackspace()
         let before2 = line[col - 2]
         let after2 = line[col + 1]
         if before2 == '(' && after2 == ')' &&
-           \ char_before == '(' && char_after == ')'
+                    \ char_before == '(' && char_after == ')'
             return "\<BS>\<Del>"
         endif
     endif
 
     return "\<BS>"
-endfunction
-
-function! DeletePair()
-    silent!
-    let line = getline('.')
-    let col = col('.') - 1
-    let pairs = {'(' : ')', '[' : ']', '{' : '}', '"' : '"', "'" : "'"}
-    let reverse = {')' : '(', ']' : '[', '}' : '{'}
-
-    " 情况 1：光标前是左括号 → 找右边配对
-    if col > 0
-        let char_before = line[col - 1]
-        if has_key(pairs, char_before)
-            let char_after = col < len(line) ? line[col] : ''
-            if char_after == pairs[char_before]
-                call setline('.', line[:col-2] . line[col+1:])
-                call cursor('.', col)
-                return
-            endif
-        endif
-        " 情况 1b：光标前是右括号 → 找左边配对
-        if has_key(reverse, char_before)
-            let left = reverse[char_before]
-            let start_pos = s:find_matching_left(col - 1, left, char_before)
-            if start_pos != -1
-                call setline('.', line[:start_pos-1] . line[col:])
-                call cursor('.', start_pos + 1)
-                return
-            endif
-        endif
-    endif
-
-    " 情况 2：光标后是左括号 → 找右边配对
-    if col < len(line)
-        let char_after = line[col]
-        if has_key(pairs, char_after)
-            let end_pos = s:find_matching_right(col, char_after, pairs[char_after])
-            if end_pos != -1
-                call setline('.', line[:col-1] . line[col+1:end_pos] . line[end_pos+1:])
-                call cursor('.', col + 1)
-                return
-            endif
-        endif
-        " 情况 2b：光标后是右括号 → 找左边配对
-        if has_key(reverse, char_after)
-            let left = reverse[char_after]
-            let start_pos = s:find_matching_left(col, left, char_after)
-            if start_pos != -1
-                call setline('.', line[:start_pos-1] . line[col+1:])
-                call cursor('.', start_pos + 1)
-                return
-            endif
-        endif
-    endif
-
-    " 情况 3：光标在括号内部 → 找包含光标的最近一对
-    let enclosing = s:find_enclosing(col, pairs, reverse)
-    if enclosing != []
-        let [start_pos, end_pos] = enclosing
-        call setline('.', line[:start_pos-1] . line[start_pos+1:end_pos] . line[end_pos+1:])
-        call cursor('.', start_pos + 1)
-        return
-    endif
-
-    echo "没有找到要成对删除的括号/引号"
-endfunction
-
-" 从右括号位置往左找配对的左括号
-function! s:find_matching_left(start, left, right)
-    let line = getline('.')
-    let pos = a:start - 1
-    let cnt = 1
-    while pos >= 0
-        if line[pos] == a:right
-            let cnt += 1
-        elseif line[pos] == a:left
-            let cnt -= 1
-            if cnt == 0
-                return pos
-            endif
-        endif
-        let pos -= 1
-    endwhile
-    return -1
-endfunction
-
-function! s:find_matching_right(start, left, right)
-    let line = getline('.')
-    let pos = a:start + 1
-    let cnt = 1
-    while pos < len(line)
-        if line[pos] == a:left
-            let cnt += 1
-        elseif line[pos] == a:right
-            let cnt -= 1
-            if cnt == 0
-                return pos
-            endif
-        endif
-        let pos += 1
-    endwhile
-    return -1
-endfunction
-
-" 找包含光标位置的最近一对括号
-function! s:find_enclosing(col, pairs, reverse)
-    let line = getline('.')
-    " 往左找最近的左括号
-    let pos = a:col - 1
-    while pos >= 0
-        let ch = line[pos]
-        if has_key(a:pairs, ch)
-            let end_pos = s:find_matching_right(pos, ch, a:pairs[ch])
-            if end_pos != -1 && end_pos >= a:col
-                return [pos, end_pos]
-            endif
-        endif
-        let pos -= 1
-    endwhile
-    return []
-endfunction
-
-" 找包含光标位置的、由指定左右符号围起来的最近一对
-function! s:find_enclosing_of(col, left, right)
-    let line = getline('.')
-    let pos = a:col - 1
-    while pos >= 0
-        if line[pos] == a:left
-            if a:left == a:right
-                " 引号类不嵌套：向右找下一个同款即为结束
-                let end_pos = -1
-                let p = pos + 1
-                while p < len(line)
-                    if line[p] == a:left
-                        let end_pos = p
-                        break
-                    endif
-                    let p += 1
-                endwhile
-            else
-                let end_pos = s:find_matching_right(pos, a:left, a:right)
-            endif
-            if end_pos != -1 && end_pos >= a:col
-                return [pos, end_pos]
-            endif
-        endif
-        let pos -= 1
-    endwhile
-    return []
 endfunction
 
 " ============================================================
@@ -639,17 +490,17 @@ set pastetoggle=<F2>
 " 10. 快速注释
 " ============================================================
 let g:comment_map = {
-    \ 'python': '# ', 'sh': '# ', 'bash': '# ', 'zsh': '# ',
-    \ 'lua': '-- ', 'sql': '-- ',
-    \ 'c': '// ', 'cpp': '// ', 'java': '// ', 'javascript': '// ',
-    \ 'typescript': '// ', 'go': '// ', 'rust': '// ', 'csharp': '// ',
-    \ 'php': '// ', 'json': '// ', 'scss': '// ',
-    \ 'vim': '" ', 'vimrc': '" ',
-    \ 'html': '<!-- ', 'markdown': '<!-- ',
-    \ 'css': '/* ',
-    \ 'yaml': '# ', 'yml': '# ', 'ruby': '# ', 'perl': '# ',
-    \ 'tex': '% ',
-\ }
+            \ 'python': '# ', 'sh': '# ', 'bash': '# ', 'zsh': '# ',
+            \ 'lua': '-- ', 'sql': '-- ',
+            \ 'c': '// ', 'cpp': '// ', 'java': '// ', 'javascript': '// ',
+            \ 'typescript': '// ', 'go': '// ', 'rust': '// ', 'csharp': '// ',
+            \ 'php': '// ', 'json': '// ', 'scss': '// ',
+            \ 'vim': '" ', 'vimrc': '" ',
+            \ 'html': '<!-- ', 'markdown': '<!-- ',
+            \ 'css': '/* ',
+            \ 'yaml': '# ', 'yml': '# ', 'ruby': '# ', 'perl': '# ',
+            \ 'tex': '% ',
+            \ }
 
 function! GetCommentStr()
     return get(g:comment_map, &filetype, '# ')
@@ -855,18 +706,18 @@ filetype plugin on
 
 " 各语言补全函数
 let g:omni_func_map = {
-    \ 'python': 'python3complete#Complete',
-    \ 'javascript': 'javascriptcomplete#CompleteJS',
-    \ 'html': 'htmlcomplete#CompleteTags',
-    \ 'css': 'csscomplete#CompleteCSS',
-    \ 'c': 'ccomplete#Complete',
-    \ 'cpp': 'cppcomplete#Complete',
-    \ 'go': 'go#complete#Complete',
-    \ 'ruby': 'rubycomplete#Complete',
-    \ 'perl': 'perlcomplete#Complete',
-    \ 'php': 'phpcomplete#Complete',
-    \ 'xml': 'xmlcomplete#CompleteTags'
-\ }
+            \ 'python': 'python3complete#Complete',
+            \ 'javascript': 'javascriptcomplete#CompleteJS',
+            \ 'html': 'htmlcomplete#CompleteTags',
+            \ 'css': 'csscomplete#CompleteCSS',
+            \ 'c': 'ccomplete#Complete',
+            \ 'cpp': 'cppcomplete#Complete',
+            \ 'go': 'go#complete#Complete',
+            \ 'ruby': 'rubycomplete#Complete',
+            \ 'perl': 'perlcomplete#Complete',
+            \ 'php': 'phpcomplete#Complete',
+            \ 'xml': 'xmlcomplete#CompleteTags'
+            \ }
 
 function! SetOmniFunc()
     let ft = &filetype
@@ -917,6 +768,7 @@ function! StripTrailingWhitespaceManual()
     silent! execute '%s/\s\+$//e'
     call setpos('.', pos)
     echo "已清理行尾空格"
+    call timer_start(2000, {-> execute('echo ""', '')})
 endfunction
 
 " ============================================================
@@ -952,45 +804,28 @@ vnoremap <C-x> "+x
 " ============================================================
 " 17. F 键快捷键
 " ============================================================
-nnoremap <silent> <F3> :Explore<CR>          " 文件浏览器
-nnoremap <silent> <F4> :Vexplore<CR>         " 垂直浏览器
-nnoremap <silent> <F5> :call RunCode()<CR>   " 运行代码
-nnoremap <silent> <F6> :call DebugCode()<CR> " 调试代码
-nnoremap <silent> <F8> :call CheckCode()<CR> " 代码检查
-nnoremap <silent> <F9> gg=G                  " 基础格式化
-nnoremap <silent> <F10> :call FormatCode()<CR> " 自动格式化
-nnoremap <silent> <F7> :set wrap!<CR>:echo "wrap = " . &wrap<CR>  " 切换自动换行
+" F1 - 帮助
+" F2 - 粘贴模式总开关
+nnoremap <silent> <F3> :Explore<CR>
+                            " 文件浏览器
+nnoremap <silent> <F4> :Vexplore<CR>
+                            " 垂直浏览器
+nnoremap <silent> <F5> :call RunInLatestTerminal()<CR>
+                            " 运行代码
+nnoremap <silent> <F6> :call DebugCode()<CR>
+                            " 调试代码
+nnoremap <silent> <F7> :set wrap!<CR>:echo "wrap = " . &wrap<CR>
+                            " 切换自动换行
+nnoremap <silent> <F8> :call CheckCode()<CR>
+                            " 代码检查
+nnoremap <silent> <F9> gg=G
+                            " 基础格式化
+nnoremap <silent> <F10> :call FormatCode()<CR>
+                            " 自动格式化
 
 " ============================================================
 " 18. 运行、调试、格式化、检查函数
 " ============================================================
-func! RunCode()
-    silent! write
-    let ft = &filetype
-    if ft == 'python'
-        exec "!python3 %"
-    elseif ft == 'go'
-        exec "!go run %"
-    elseif ft == 'c'
-        exec "!gcc % -o %< -Wall -Wextra -O2 && ./%<"
-    elseif ft == 'cpp'
-        exec "!g++ % -o %< -Wall -Wextra -O2 && ./%<"
-    elseif ft == 'javascript'
-        exec "!node %"
-    elseif ft == 'sh'
-        exec "!bash %"
-    elseif ft == 'lua'
-        exec "!lua %"
-    elseif ft == 'java'
-        exec "!javac % && java %<"
-    elseif ft == 'html'
-        exec "!firefox % &"
-    else
-        echo "vimore: 不支持的文件类型: " . ft
-    endif
-    redraw!
-endfunc
-
 func! DebugCode()
     silent! write
     let ft = &filetype
@@ -1003,72 +838,74 @@ func! DebugCode()
     else
         echo "vimore: 调试不支持的文件类型: " . ft
     endif
-    redraw!
+    "redraw!
 endfunc
 
 func! FormatCode()
     silent! write
     let pos = getpos('.')
+    let ft = &filetype
     let formatted = 0
+    let output = ''
 
-    if &filetype == 'python'
+    if ft == 'python'
         if executable('black')
-            silent! execute "!black --skip-string-normalization %"
+            let output = system('black --skip-string-normalization ' . shellescape(expand('%')) . ' 2>&1')
             let formatted = 1
         elseif executable('autopep8')
-            silent! execute "!autopep8 -i --aggressive --max-line-length=120 %"
+            let output = system('autopep8 -i --aggressive --max-line-length=120 ' . shellescape(expand('%')) . ' 2>&1')
             let formatted = 1
         endif
         if formatted && executable('isort')
-            silent! execute "!isort %"
+            let output .= system('isort ' . shellescape(expand('%')) . ' 2>&1')
         endif
         if !formatted
             execute "normal gg=G"
         endif
-    elseif &filetype == 'go'
+    elseif ft == 'go'
         if executable('gofmt')
-            silent! execute "!gofmt -w %"
+            let output = system('gofmt -w ' . shellescape(expand('%')) . ' 2>&1')
             let formatted = 1
         endif
         if formatted && executable('goimports')
-            silent! execute "!goimports -w %"
+            let output .= system('goimports -w ' . shellescape(expand('%')) . ' 2>&1')
         endif
         if !formatted
             execute "normal gg=G"
         endif
-    elseif &filetype == 'javascript' || &filetype == 'typescript'
+    elseif ft == 'javascript' || ft == 'typescript'
         if executable('prettier')
-            silent! execute "!prettier --write %"
+            let output = system('prettier --write ' . shellescape(expand('%')) . ' 2>&1')
             let formatted = 1
         elseif executable('eslint')
-            silent! execute "!eslint --fix %"
+            let output = system('eslint --fix ' . shellescape(expand('%')) . ' 2>&1')
             let formatted = 1
         endif
         if !formatted
             execute "normal gg=G"
         endif
-    elseif &filetype == 'c' || &filetype == 'cpp'
+    elseif ft == 'c' || ft == 'cpp'
         if executable('clang-format')
-            silent! execute "!clang-format -i %"
+            let output = system('clang-format -i ' . shellescape(expand('%')) . ' 2>&1')
             let formatted = 1
         endif
         if !formatted
             execute "normal gg=G"
         endif
-    elseif &filetype == 'java'
+    elseif ft == 'java'
         if executable('astyle')
-            silent! execute "!astyle --style=java --suffix=none %"
+            let output = system('astyle --style=java --suffix=none ' . shellescape(expand('%')) . ' 2>&1')
             let formatted = 1
         endif
         if !formatted
             execute "normal gg=G"
         endif
-    elseif &filetype == 'json'
+    elseif ft == 'json'
         if executable('prettier')
-            silent! execute "!prettier --write %"
+            let output = system('prettier --write ' . shellescape(expand('%')) . ' 2>&1')
             let formatted = 1
         elseif executable('python3')
-            silent! execute "!python3 -m json.tool % > %:r.tmp && mv %:r.tmp %"
+            let output = system('python3 -m json.tool ' . shellescape(expand('%')) . ' > ' . shellescape(expand('%:r')) . '.tmp && mv ' . shellescape(expand('%:r')) . '.tmp ' . shellescape(expand('%')) . ' 2>&1')
             let formatted = 1
         endif
         if !formatted
@@ -1078,31 +915,49 @@ func! FormatCode()
         execute "normal gg=G"
     endif
 
+    " 重载文件，恢复光标
     silent! execute "e!"
     call setpos('.', pos)
-    redraw!
+
+    " 显示输出
+    if empty(output)
+        echo "格式化完成"
+    else
+        echo output
+    endif
 endfunc
 
 func! CheckCode()
     silent! write
-    if &filetype == 'python'
+    let ft = &filetype
+    let output = ''
+
+    if ft == 'python'
         if executable('pylint')
-            exec "!pylint %"
+            let output = system('pylint ' . shellescape(expand('%')))
         elseif executable('flake8')
-            exec "!flake8 %"
+            let output = system('flake8 ' . shellescape(expand('%')))
         else
             echo "vimore: 未找到 Python 代码检查工具"
+            return
         endif
-    elseif &filetype == 'javascript'
+    elseif ft == 'javascript'
         if executable('eslint')
-            exec "!eslint %"
+            let output = system('eslint ' . shellescape(expand('%')))
         else
             echo "vimore: 未找到 JavaScript 代码检查工具"
+            return
         endif
     else
-        echo "vimore: 代码检查不支持的文件类型: " . &filetype
+        echo "vimore: 代码检查不支持的文件类型: " . ft
+        return
     endif
-    redraw!
+
+    if empty(output)
+        echo "检查通过，没有发现问题"
+    else
+        echo output
+    endif
 endfunc
 
 " ============================================================
@@ -1281,29 +1136,6 @@ function! WordCount()
 endfunction
 
 " == Leader b ==
-" 删掉光标所在的整对括号及其内容
-function! DeleteEnclosingPair(left)
-    let pairs = {'(' : ')', '[' : ']', '{' : '}', '"' : '"', "'" : "'"}
-    if !has_key(pairs, a:left)
-        echo "不支持的括号: " . a:left
-        return
-    endif
-    let line = getline('.')
-    let col = col('.') - 1
-    let enclosing = s:find_enclosing_of(col, a:left, pairs[a:left])
-    if enclosing == []
-        echo "光标不在 " . a:left . pairs[a:left] . " 内"
-        return
-    endif
-    let [start_pos, end_pos] = enclosing
-    call setline('.', line[:start_pos-1] . line[end_pos+1:])
-    call cursor('.', start_pos + 1)
-endfunction
-
-function! DeleteEnclosingPairCode(code)
-    call DeleteEnclosingPair(nr2char(a:code))
-endfunction
-
 " 给可视选区加括号
 function! AddPair(pair)
     let map = {'(' : ')', '[' : ']', '{' : '}', '"' : '"', "'" : "'"}
@@ -1346,94 +1178,94 @@ endfunction
 
 " === 菜单主体 ===
 let g:leader_menu = {
-    \ 'w':  {
-        \ 'name': '写入',
-        \ 'w': ['保存',           function('SaveAndClear')],
-        \ 's': ['清理行尾空格',   function('StripTrailingWhitespaceManual')],
-        \ 'c': ['统计字数',       function('WordCount')],
-    \ },
-    \ 'q':  ['退出',              ':silent! quit<CR>'],
-    \ 'W':  ['全部保存',          ':silent! wall<CR>'],
-    \ 'Q':  ['全部退出',          ':silent! qall<CR>'],
-    \ 'h':  {
-        \ 'name': '显示',
-        \ 'h': ['取消搜索高亮',   ':nohlsearch<CR>'],
-        \ 'x': ['十六进制模式',   ':%!xxd<CR>'],
-        \ 'X': ['退出十六进制',   ':%!xxd -r<CR>'],
-    \ },
-    \ 'f':  ['格式化代码',        function('FormatCode')],
-    \ 'c':  {
-        \ 'name': '维护',
-        \ 'c': ['代码检查',       function('CheckCode')],
-        \ 'v': ['重新加载配置',   ':source $MYVIMRC<CR>'],
-        \ 'e': ['编辑配置',       ':e $MYVIMRC<CR>'],
-    \ },
-    \ '/':  ['注释/取消注释',     function('ToggleComment')],
-    \ 'b':  {
-        \ 'name': '括号',
-        \ 'd': {
+            \ 'w':  {
+            \ 'name': '写入',
+            \ 'w': ['保存',           function('SaveAndClear')],
+            \ 's': ['清理行尾空格',   function('StripTrailingWhitespaceManual')],
+            \ 'c': ['统计字数',       function('WordCount')],
+            \ },
+            \ 'q':  ['退出',              ':silent! quit<CR>'],
+            \ 'W':  ['全部保存',          ':silent! wall<CR>'],
+            \ 'Q':  ['全部退出',          ':silent! qall<CR>'],
+            \ 'h':  {
+            \ 'name': '显示',
+            \ 'h': ['取消搜索高亮',   ':nohlsearch<CR>'],
+            \ 'x': ['十六进制模式',   ':%!xxd<CR>'],
+            \ 'X': ['退出十六进制',   ':%!xxd -r<CR>'],
+            \ },
+            \ 'f':  ['格式化代码',        function('FormatCode')],
+            \ 'c':  {
+            \ 'name': '维护',
+            \ 'c': ['代码检查',       function('CheckCode')],
+            \ 'v': ['重新加载配置',   ':source $MYVIMRC<CR>'],
+            \ 'e': ['编辑配置',       ':e $MYVIMRC<CR>'],
+            \ },
+            \ '/':  ['注释/取消注释',     function('ToggleComment')],
+            \ 'b':  {
+            \ 'name': '括号',
+            \ 'd': {
             \ 'name': '删除指定括号对及其内容',
-            \ '(': ['圆括号',  ':call DeleteEnclosingPair("(")<CR>'],
-            \ '[': ['方括号',  ':call DeleteEnclosingPair("[")<CR>'],
-            \ '{': ['花括号',  ':call DeleteEnclosingPair("{")<CR>'],
-            \ '"': ['双引号',  ':call DeleteEnclosingPairCode(34)<CR>'],
-            \ "'": ['单引号',  ':call DeleteEnclosingPairCode(39)<CR>'],
-        \ },
-        \ 'a': {
+            \ '(': ['圆括号',  ':execute "normal! da" . nr2char(40)<CR>'],
+            \ '[': ['方括号',  ':execute "normal! da" . nr2char(91)<CR>'],
+            \ '{': ['花括号',  ':execute "normal! da" . nr2char(123)<CR>'],
+            \ '"': ['双引号',  ':execute "normal! da" . nr2char(34)<CR>'],
+            \ "'": ['单引号',  ':execute "normal! da" . nr2char(39)<CR>'],
+            \ },
+            \ 'a': {
             \ 'name': '在可视选区外添加指定括号',
             \ '(': ['圆括号',  ':call AddPair("(")<CR>'],
             \ '[': ['方括号',  ':call AddPair("[")<CR>'],
             \ '{': ['花括号',  ':call AddPair("{")<CR>'],
             \ '"': ['双引号',  ':call AddPairCode(34)<CR>'],
             \ "'": ['单引号',  ':call AddPairCode(39)<CR>'],
-        \ },
-    \ },
-    \ 'r':  ['查看寄存器',        ':reg<CR>'],
-    \ 'z':  {
-        \ 'name': '视图',
-        \ 'z': ['全部折叠',       ':normal! zM<CR>'],
-        \ 'a': ['切换折叠',       ':normal! za<CR>'],
-        \ 'Z': ['全部展开',       ':normal! zR<CR>'],
-    \ },
-    \ 'y':  ['复制到系统剪切板',  ':normal! "+yy<CR>'],
-    \ 'p':  ['从系统剪切板粘贴',  ':normal! "+p<CR>'],
-    \ 'P':  ['从系统剪切板粘贴(前)', ':normal! "+P<CR>'],
-    \ 's':  {
-        \ 'name': '整理',
-        \ 'd': ['删除空行',       ':silent! g/^\s*$/d<CR>'],
-        \ 's': ['排序选中行',     ':sort<CR>'],
-        \ 'u': ['去重排序',       ':sort u<CR>'],
-        \ 'n': ['数字排序',       ':sort n<CR>'],
-    \ },
-    \ 'g':  {
-        \ 'name': 'Git',
-        \ 's': ['git status',     ':!git status<CR>'],
-        \ 'd': ['git diff',       ':!git diff<CR>'],
-        \ 'l': ['git log',        ':!git log --oneline --graph<CR>'],
-        \ 'a': ['git add',        ':!git add %<CR>'],
-        \ 'c': ['git commit',     ':!git commit -m "<C-r>=input(''Commit: '')<CR>"<CR>'],
-        \ 'p': ['git push',       ':!git push<CR>'],
-        \ 'P': ['git pull',       ':!git pull<CR>'],
-    \ },
-    \ 't':  {
-        \ 'name': '窗口',
-        \ 't': ['底部终端',       ':call OpenTerminal("horizontal")<CR>'],
-        \ 'v': ['右侧终端',       ':call OpenTerminal("vertical")<CR>'],
-        \ 'r': ['运行当前文件',   function('RunInLatestTerminal')],
-        \ 'k': ['切换/关闭终端',  function('ToggleTerminal')],
-        \ 'n': ['新建标签',       ':tabnew<CR>'],
-        \ 'e': ['新标签编辑当前', ':tabedit %<CR>'],
-        \ 'c': ['关闭标签',       ':tabclose<CR>'],
-        \ 'o': ['保留当前标签',   ':tabonly<CR>'],
-        \ 'M': ['左移标签',       ':tabmove -1<CR>'],
-        \ 'N': ['右移标签',       ':tabmove +1<CR>'],
-        \ 'l': ['列出标签',       ':tabs<CR>'],
-        \ 'u': ['恢复关闭标签',   ':tabnew #<CR>'],
-        \ 'd': ['新标签打开目录', ':tabnew .<CR>'],
-        \ 'f': ['文件浏览器',     ':Explore<CR>'],
-        \ 'F': ['垂直文件浏览器', ':Vexplore<CR>']
-    \ },
-\ }
+            \ },
+            \ },
+            \ 'r':  ['查看寄存器',        ':reg<CR>'],
+            \ 'z':  {
+            \ 'name': '视图',
+            \ 'z': ['全部折叠',       ':normal! zM<CR>'],
+            \ 'a': ['切换折叠',       ':normal! za<CR>'],
+            \ 'Z': ['全部展开',       ':normal! zR<CR>'],
+            \ },
+            \ 'y':  ['复制到系统剪切板',  ':normal! "+yy<CR>'],
+            \ 'p':  ['从系统剪切板粘贴',  ':normal! "+p<CR>'],
+            \ 'P':  ['从系统剪切板粘贴(前)', ':normal! "+P<CR>'],
+            \ 's':  {
+            \ 'name': '整理',
+            \ 'd': ['删除空行',       ':silent! g/^\s*$/d<CR>'],
+            \ 's': ['排序选中行',     ':sort<CR>'],
+            \ 'u': ['去重排序',       ':sort u<CR>'],
+            \ 'n': ['数字排序',       ':sort n<CR>'],
+            \ },
+            \ 'g':  {
+            \ 'name': 'Git',
+            \ 's': ['git status',     ':!git status<CR>'],
+            \ 'd': ['git diff',       ':!git diff<CR>'],
+            \ 'l': ['git log',        ':!git log --oneline --graph<CR>'],
+            \ 'a': ['git add',        ':!git add %<CR>'],
+            \ 'c': ['git commit',     ':!git commit -m "<C-r>=input(''Commit: '')<CR>"<CR>'],
+            \ 'p': ['git push',       ':!git push<CR>'],
+            \ 'P': ['git pull',       ':!git pull<CR>'],
+            \ },
+            \ 't':  {
+            \ 'name': '窗口',
+            \ 't': ['底部终端',       ':call OpenTerminal("horizontal")<CR>'],
+            \ 'v': ['右侧终端',       ':call OpenTerminal("vertical")<CR>'],
+            \ 'r': ['运行当前文件',   function('RunInLatestTerminal')],
+            \ 'k': ['切换/关闭终端',  function('ToggleTerminal')],
+            \ 'n': ['新建标签',       ':tabnew<CR>'],
+            \ 'e': ['新标签编辑当前', ':tabedit %<CR>'],
+            \ 'c': ['关闭标签',       ':tabclose<CR>'],
+            \ 'o': ['保留当前标签',   ':tabonly<CR>'],
+            \ 'M': ['左移标签',       ':tabmove -1<CR>'],
+            \ 'N': ['右移标签',       ':tabmove +1<CR>'],
+            \ 'l': ['列出标签',       ':tabs<CR>'],
+            \ 'u': ['恢复关闭标签',   ':tabnew #<CR>'],
+            \ 'd': ['新标签打开目录', ':tabnew .<CR>'],
+            \ 'f': ['文件浏览器',     ':Explore<CR>'],
+            \ 'F': ['垂直文件浏览器', ':Vexplore<CR>']
+            \ },
+            \ }
 
 " === 可视模式单独快捷键 ===
 xnoremap <Leader>y "+y
@@ -1454,7 +1286,7 @@ vnoremap <silent> > >gv
 
 
 " === 菜单引擎 ===
-" 渲染菜单为文本行
+" == 渲染菜单为文本行 ==
 function! s:RenderMenu(menu, prefix)
     let leaf_lines = []
     let sub_lines = []
@@ -1480,22 +1312,47 @@ function! s:RenderMenu(menu, prefix)
     return leaf_lines + sub_lines
 endfunction
 
-" 执行菜单项
+" == 执行菜单项 ==
+" 白名单(不静默输出)
+let s:verbose_funcs = [
+            \ 'SaveAndClear',
+            \ 'StripTrailingWhitespaceManual',
+            \ 'FormatCode',
+            \ 'CheckCode'
+            \ ]
 function! s:RunMenuItem(item)
     let l:Action = a:item[1]
+
     if type(l:Action) == v:t_func
-        silent call call(l:Action, [])
+        let l:is_verbose = 0
+        for f in s:verbose_funcs
+            if string(l:Action) =~ f
+                let l:is_verbose = 1
+                break
+            endif
+        endfor
+        if l:is_verbose
+            call call(l:Action, [])
+        else
+            " 其他命令直接静默执行操作
+            silent call call(l:Action, [])
+        endif
     elseif l:Action[0] == ':'
-        " 去掉末尾可能的 <CR>
         let l:cmd = substitute(l:Action, '<CR>$', '', '')
-        silent execute l:cmd
+        " 输出型命令不走 silent，否则屏幕不刷新
+        if l:cmd =~ '^:\(reg\|tabs\|marks\|jumps\|ls\|buffers\|messages\)\>'
+            execute l:cmd
+        else
+            silent execute l:cmd
+            redraw
+        endif
     else
         silent execute 'normal! ' . l:Action
+        redraw
     endif
-    redraw
 endfunction
 
-" 主提示循环
+" == 主提示循环 ==
 function! s:LeaderPrompt(...)
     let silent_mode = a:0 > 0 ? a:1 : 0
 
@@ -1528,13 +1385,13 @@ function! s:LeaderPrompt(...)
 
             if exists('*popup_create')
                 let winid = popup_create(lines, #{
-                    \ line: &lines - len(lines) - 3,
-                    \ col: &columns - width - 4,
-                    \ minwidth: width + 2,
-                    \ maxwidth: width + 2,
-                    \ padding: [0, 1, 0, 1],
-                    \ title: title,
-                    \ })
+                            \ line: &lines - len(lines) - 3,
+                            \ col: &columns - width - 4,
+                            \ minwidth: width + 2,
+                            \ maxwidth: width + 2,
+                            \ padding: [0, 1, 0, 1],
+                            \ title: title,
+                            \ })
                 redraw!
             else
                 redraw

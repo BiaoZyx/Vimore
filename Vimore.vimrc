@@ -694,24 +694,24 @@ endfunction
 function! ToggleCommentVisual()
     let comment = GetCommentStr()
     let comment_end = GetCommentEndStr()
-    let safe_comment = escape(comment, '"')
-    let safe_comment_end = escape(comment_end, '"')
+    let safe_comment = escape(comment, '"!')
+    let safe_comment_end = escape(comment_end, '"!')
     let first_line = getline("'<")
     let trimmed = substitute(first_line, '^\s*', '', '')
     let is_commented = trimmed =~ '^' . escape(comment, '.*^$[]')
 
     if is_commented
         if comment_end != ''
-            execute "silent '<,'>s/\\(\\s*\\)" . escape(comment, '.*^$[]') . "\\(.*\\)" . escape(comment_end, '.*^$[]') . "/\\1\\2/"
+            execute "silent '<,'>s!\\(\\s*\\)" . escape(comment, '.*^$!') . "\\(.*\\)" . escape(comment_end, '.*^$!') . "!\\1\\2!"
         else
-            execute "silent '<,'>s/\\(\\s*\\)" . escape(comment, '.*^$[]') . "/\\1/"
+            execute "silent '<,'>s!\\(\\s*\\)" . escape(comment, '.*^$!') . "!\\1!"
         endif
     else
         if comment_end != ''
-            execute "silent '<,'>s/^\\(\\s*\\)/\\1" . safe_comment . "/"
-            execute "silent '<,'>s/$/" . safe_comment_end . "/"
+            execute "silent '<,'>s!^\\(\\s*\\)!\\1" . safe_comment . "!"
+            execute "silent '<,'>s!$!" . safe_comment_end . "!"
         else
-            execute "silent '<,'>s/^\\(\\s*\\)/\\1" . safe_comment . "/"
+            execute "silent '<,'>s!^\\(\\s*\\)!\\1" . safe_comment . "!"
         endif
     endif
 endfunction

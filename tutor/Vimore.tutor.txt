@@ -286,7 +286,7 @@
    print("hello")
    print("vimor")
 
- Note: 终端里按 Esc 或 C-c 回普通模式，C-S-c 复制、C-S-v
+ Note: 终端里按 C-\ C-n 回普通模式，C-S-c 复制、C-S-v
        粘到系统剪贴板。
 
  Note: SPC t r 先存盘再跑，没终端就现开一个，命令按类型选：

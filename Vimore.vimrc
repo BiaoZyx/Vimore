@@ -939,8 +939,8 @@ nnoremap <C-k> <C-w>k
 nnoremap <C-l> <C-w>l
 
 " 标签页切换
-nnoremap <silent> <S-Left> :tabp<CR>
-nnoremap <silent> <S-Right> :tabn<CR>
+nnoremap <silent> <A-Left> :tabp<CR>
+nnoremap <silent> <A-Right> :tabn<CR>
 nnoremap <silent> <C-t> :tabnew<CR>
 nnoremap <silent> <C-w> :tabclose<CR>
 
@@ -1272,12 +1272,83 @@ set tabline=%!MyTabLine()
 " ============================================================
 " 23. Leader 提示菜单 (仿 which-key / Helix)
 " ============================================================
+" === 依赖函数 ===
+" == Leader w c ==
+function! WordCount()
+    call feedkeys("g\<C-g>", 'n')
+endfunction
+
+" == Leader b ==
+" 删掉光标所在的整对括号及其内容
+function! DeleteEnclosingPair(left)
+    let pairs = {'(' : ')', '[' : ']', '{' : '}', '"' : '"', "'" : "'"}
+    if !has_key(pairs, a:left)
+        echo "不支持的括号: " . a:left
+        return
+    endif
+    let line = getline('.')
+    let col = col('.') - 1
+    let enclosing = s:find_enclosing_of(col, a:left, pairs[a:left])
+    if enclosing == []
+        echo "光标不在 " . a:left . pairs[a:left] . " 内"
+        return
+    endif
+    let [start_pos, end_pos] = enclosing
+    call setline('.', line[:start_pos-1] . line[end_pos+1:])
+    call cursor('.', start_pos + 1)
+endfunction
+
+function! DeleteEnclosingPairCode(code)
+    call DeleteEnclosingPair(nr2char(a:code))
+endfunction
+
+" 给可视选区加括号
+function! AddPair(pair)
+    let map = {'(' : ')', '[' : ']', '{' : '}', '"' : '"', "'" : "'"}
+    if !has_key(map, a:pair)
+        echo "不支持的括号: " . a:pair
+        return
+    endif
+    let left = a:pair
+    let right = map[left]
+
+    let start_pos = getpos("'<")
+    let end_pos = getpos("'>")
+    if start_pos[1] == 0 || end_pos[1] == 0
+        echo "没有可视选区"
+        return
+    endif
+
+    let start_line = start_pos[1]
+    let end_line = end_pos[1]
+    let start_col = start_pos[2]
+    let end_col = end_pos[2]
+
+    if start_line == end_line
+        let line = getline(start_line)
+        let prefix = start_col > 1 ? line[:start_col-2] : ''
+        let new_line = prefix . left . line[start_col-1:end_col-1] . right . line[end_col:]
+        call setline(start_line, new_line)
+    else
+        let first = getline(start_line)
+        let last = getline(end_line)
+        let prefix = start_col > 1 ? first[:start_col-2] : ''
+        call setline(start_line, prefix . left . first[start_col-1:])
+        call setline(end_line, last[:end_col-1] . right . last[end_col:])
+    endif
+endfunction
+
+function! AddPairCode(code)
+    call AddPair(nr2char(a:code))
+endfunction
+
+" === 菜单主体 ===
 let g:leader_menu = {
     \ 'w':  {
         \ 'name': '写入',
         \ 'w': ['保存',           function('SaveAndClear')],
         \ 's': ['清理行尾空格',   function('StripTrailingWhitespaceManual')],
-        \ 'c': ['统计字数',       ':normal! g<C-g><CR>'],
+        \ 'c': ['统计字数',       function('WordCount')],
     \ },
     \ 'q':  ['退出',              ':silent! quit<CR>'],
     \ 'W':  ['全部保存',          ':silent! wall<CR>'],
@@ -1379,70 +1450,6 @@ xnoremap <silent> > >gv
 vnoremap <silent> < <gv
 vnoremap <silent> > >gv
 
-" === 依赖函数 ===
-" == Leader b ==
-" 删掉光标所在的整对括号及其内容
-function! DeleteEnclosingPair(left)
-    let pairs = {'(' : ')', '[' : ']', '{' : '}', '"' : '"', "'" : "'"}
-    if !has_key(pairs, a:left)
-        echo "不支持的括号: " . a:left
-        return
-    endif
-    let line = getline('.')
-    let col = col('.') - 1
-    let enclosing = s:find_enclosing_of(col, a:left, pairs[a:left])
-    if enclosing == []
-        echo "光标不在 " . a:left . pairs[a:left] . " 内"
-        return
-    endif
-    let [start_pos, end_pos] = enclosing
-    call setline('.', line[:start_pos-1] . line[end_pos+1:])
-    call cursor('.', start_pos + 1)
-endfunction
-
-function! DeleteEnclosingPairCode(code)
-    call DeleteEnclosingPair(nr2char(a:code))
-endfunction
-
-" 给可视选区加括号
-function! AddPair(pair)
-    let map = {'(' : ')', '[' : ']', '{' : '}', '"' : '"', "'" : "'"}
-    if !has_key(map, a:pair)
-        echo "不支持的括号: " . a:pair
-        return
-    endif
-    let left = a:pair
-    let right = map[left]
-
-    let start_pos = getpos("'<")
-    let end_pos = getpos("'>")
-    if start_pos[1] == 0 || end_pos[1] == 0
-        echo "没有可视选区"
-        return
-    endif
-
-    let start_line = start_pos[1]
-    let end_line = end_pos[1]
-    let start_col = start_pos[2]
-    let end_col = end_pos[2]
-
-    if start_line == end_line
-        let line = getline(start_line)
-        let prefix = start_col > 1 ? line[:start_col-2] : ''
-        let new_line = prefix . left . line[start_col-1:end_col-1] . right . line[end_col:]
-        call setline(start_line, new_line)
-    else
-        let first = getline(start_line)
-        let last = getline(end_line)
-        let prefix = start_col > 1 ? first[:start_col-2] : ''
-        call setline(start_line, prefix . left . first[start_col-1:])
-        call setline(end_line, last[:end_col-1] . right . last[end_col:])
-    endif
-endfunction
-
-function! AddPairCode(code)
-    call AddPair(nr2char(a:code))
-endfunction
 
 " === 菜单引擎 ===
 " 渲染菜单为文本行

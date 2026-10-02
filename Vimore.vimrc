@@ -171,7 +171,7 @@ let &statusline .= '%='                       " 右对齐
 let &statusline .= '%2* [%Y]%*'               " 文件类型
 let &statusline .= '%3* [%{&ff}] [%{&fenc!=''''?&fenc:&enc}]%*'  " 格式 & 编码
 let &statusline .= '%4* [%l,%v] [%p%%]%*'    " 行、列、百分比
-let &statusline .= '%5* %{strftime(''%H:%M'')}%*'  " 当前时间
+let &statusline .= '%5* %{strftime(''%H:%M'')}%* '  " 当前时间
 
 " ============================================================
 " 4. 编码与文件

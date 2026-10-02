@@ -720,8 +720,8 @@ endfunction
 " 11. 终端集成
 " ============================================================
 " 终端退出
-tnoremap <Esc> <C-\><C-n>
-tnoremap <C-c> <C-\><C-n>
+tnoremap <Esc><Esc> <C-\><C-n>
+" tnoremap <C-c> <C-\><C-n>
 
 " 终端复制（退出终端模式后复制到系统剪切板）
 tnoremap <C-S-c> <C-\><C-n>"+yy

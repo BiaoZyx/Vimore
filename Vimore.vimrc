@@ -2,7 +2,7 @@
 " Vimore
 " 作者: BiaoZyx
 " 邮箱: BiaoZyx@outlook.com
-" 版本: 3.17
+" 版本: 3.18
 " ============================================================
 "  _   ___
 " | | / (_)_ _  ___  _______
@@ -573,6 +573,9 @@ endfunction
 " 终端退出
 tnoremap <Esc><Esc> <C-\><C-n>
 " tnoremap <C-c> <C-\><C-n>
+
+" 强制透传 Ctrl-C
+tnoremap <C-c> <Cmd>call term_sendkeys(bufnr('%'), nr2char(3))<CR>
 
 " 终端复制（退出终端模式后复制到系统剪切板）
 tnoremap <C-S-c> <C-\><C-n>"+yy

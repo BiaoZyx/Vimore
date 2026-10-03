@@ -290,6 +290,7 @@ endfunction
 " 补全左括号光标后无字符或紧挨右括号时智能处理）
 inoremap <silent> ( <C-r>=SmartPair('(', ')')<CR>
 inoremap <silent> [ <C-r>=SmartPair('[', ']')<CR>
+inoremap <silent> { <C-r>=SmartPair('{', '}')<CR>
 
 " 特殊映射
 function! SmartCondition(char)

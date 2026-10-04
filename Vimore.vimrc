@@ -2,7 +2,7 @@
 " Vimore
 " 作者: BiaoZyx
 " 邮箱: BiaoZyx@outlook.com
-" 版本: 3.19.2
+" 版本: 3.19.3
 " ============================================================
 "  _   ___
 " | | / (_)_ _  ___  _______
@@ -1244,7 +1244,7 @@ let g:leader_menu = {
             \ 'c':  {
             \ 'name': '维护',
             \ 'c': ['代码检查',       function('CheckCode')],
-            \ 'v': ['重新加载配置',   ':source $MYVIMRC<CR>'],
+            \ 'v': ['重新加载配置',   ':call timer_start(0, {-> execute("source $MYVIMRC")})<CR>'],
             \ 'e': ['编辑配置',       ':e $MYVIMRC<CR>'],
             \ },
             \ '/':  ['注释/取消注释',     function('ToggleCommentSmart')],

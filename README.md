@@ -7,6 +7,16 @@
 
 ---
 
+## What is Vimore?
+
+Vimore is a pure Vimscript `.vimrc` that turns vanilla Vim into a
+modern, out-of-the-box editor — without any plugin manager, LSP,
+or external dependency. It provides a which-key style menu,
+smart bracket handling, terminal integration, Git shortcuts,
+and more, all in ~1500 lines of Vimscript.
+
+---
+
 ## 这是什么
 
 Vimore 是一份纯 Vimscript 写的 `.vimrc`，目标是：

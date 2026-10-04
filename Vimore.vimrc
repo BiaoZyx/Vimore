@@ -2,7 +2,7 @@
 " Vimore
 " 作者: BiaoZyx
 " 邮箱: BiaoZyx@outlook.com
-" 版本: 3.19.1
+" 版本: 3.19.2
 " ============================================================
 "  _   ___
 " | | / (_)_ _  ___  _______
@@ -83,7 +83,8 @@ if has('gui_running')
     " ---- GUI 颜色 ----
     highlight StatusLine   guifg=#ffffff guibg=#585858 gui=bold
     highlight StatusLineNC guifg=#aaaaaa guibg=#303030
-    highlight StatusLineTerm guifg=#ffffff guibg=#303030 gui=bold
+    highlight StatusLineTerm   guifg=#ffffff guibg=#585858 gui=bold
+    highlight StatusLineTermNC guifg=#aaaaaa guibg=#303030
     highlight User1        guifg=#ffd700 guibg=#585858 gui=bold
     highlight User2        guifg=#87d787 guibg=#585858 gui=bold
     highlight User3        guifg=#5fd7ff guibg=#585858 gui=bold
@@ -103,7 +104,8 @@ else
     if &t_Co >= 256
         highlight StatusLine   ctermfg=white ctermbg=238 cterm=bold
         highlight StatusLineNC ctermfg=gray  ctermbg=236
-        highlight StatusLineTerm ctermfg=white ctermbg=236 cterm=bold
+        highlight StatusLineTerm   ctermfg=white ctermbg=238 cterm=bold
+        highlight StatusLineTermNC ctermfg=gray  ctermbg=236
         highlight User1        ctermfg=220   ctermbg=238 cterm=bold
         highlight User2        ctermfg=114   ctermbg=238 cterm=bold
         highlight User3        ctermfg=81    ctermbg=238 cterm=bold
@@ -122,6 +124,8 @@ else
         " ---- 低色彩终端（8/16 色） ----
         highlight StatusLine   ctermfg=white ctermbg=darkblue cterm=bold
         highlight StatusLineNC ctermfg=gray  ctermbg=darkgray
+        highlight StatusLineTerm   ctermfg=white ctermbg=darkblue cterm=bold
+        highlight StatusLineTermNC ctermfg=gray  ctermbg=darkgray
         highlight User1        ctermfg=yellow ctermbg=darkblue cterm=bold
         highlight User2        ctermfg=green  ctermbg=darkblue cterm=bold
         highlight User3        ctermfg=cyan   ctermbg=darkblue cterm=bold

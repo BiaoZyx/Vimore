@@ -2,7 +2,7 @@
 " Vimore
 " 作者: BiaoZyx
 " 邮箱: BiaoZyx@outlook.com
-" 版本: 3.19.3
+" 版本: 3.19.4
 " ============================================================
 "  _   ___
 " | | / (_)_ _  ___  _______
@@ -1061,6 +1061,7 @@ function! s:SetTitle()
         call append(4, " * @date: " . date)
         call append(5, " * @description: ")
         call append(6, " ************************************************************************/")
+        call append(7, "")
     elseif &filetype == 'cpp'
         call setline(1, "/*************************************************************************")
         call append(1, " * @file: ".expand("%"))
@@ -1069,6 +1070,7 @@ function! s:SetTitle()
         call append(4, " * @date: " . date)
         call append(5, " * @description: ")
         call append(6, " ************************************************************************/")
+        call append(7, "")
     elseif &filetype == 'java'
         call setline(1, "/*")
         call append(1, " * @file: ".expand("%"))

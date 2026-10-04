@@ -1022,8 +1022,7 @@ let g:netrw_sort_sequence='[\/]$,*'
 " ============================================================
 " 20. 文件头自动生成
 " ============================================================
-" autocmd BufNewFile *.py,*.go,*.sh,*.c,*.cpp,*.java,*.js,*.ts,*.rs,*.lua call s:SetTitle()
-autocmd BufNewFile *.py,*.go,*.sh,*.java,*.js,*.ts,*.rs,*.lua call s:SetTitle()
+autocmd BufNewFile *.py,*.go,*.sh,*.c,*.cpp,*.java,*.js,*.ts,*.rs,*.lua call s:SetTitle()
 
 function! s:SetTitle()
     if line('$') > 1 && getline(1) != ''
@@ -1062,14 +1061,6 @@ function! s:SetTitle()
         call append(4, " * @date: " . date)
         call append(5, " * @description: ")
         call append(6, " ************************************************************************/")
-        call append(7, "")
-        call append(8, "#include <stdio.h>")
-        call append(9, "#include <stdlib.h>")
-        call append(10, "")
-        call append(11, "int main(int argc, char *argv[]) {")
-        call append(12, "    return 0;")
-        call append(13, "}")
-        call append(14, "")
     elseif &filetype == 'cpp'
         call setline(1, "/*************************************************************************")
         call append(1, " * @file: ".expand("%"))
@@ -1078,18 +1069,6 @@ function! s:SetTitle()
         call append(4, " * @date: " . date)
         call append(5, " * @description: ")
         call append(6, " ************************************************************************/")
-        call append(7, "")
-        call append(8, "#include <iostream>")
-        call append(9, "#include <vector>")
-        call append(10, "#include <string>")
-        call append(11, "#include <algorithm>")
-        call append(12, "")
-        call append(13, "using namespace std;")
-        call append(14, "")
-        call append(15, "int main(int argc, char *argv[]) {")
-        call append(16, "    return 0;")
-        call append(17, "}")
-        call append(18, "")
     elseif &filetype == 'java'
         call setline(1, "/*")
         call append(1, " * @file: ".expand("%"))

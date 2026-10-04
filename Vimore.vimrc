@@ -2,7 +2,7 @@
 " Vimore
 " 作者: BiaoZyx
 " 邮箱: BiaoZyx@outlook.com
-" 版本: 3.19.4
+" 版本: 3.19.5
 " ============================================================
 "  _   ___
 " | | / (_)_ _  ___  _______
@@ -1036,8 +1036,8 @@ function! s:SetTitle()
         call append(1, "# -*- coding: utf-8 -*-")
         call append(2, "\"\"\"")
         call append(3, "@Author: " . g:author)
-        call append(4, "@Email: " . g:email)
-        call append(5, "@Date: " . date)
+        call append(4, "@Email:  " . g:email)
+        call append(5, "@Date:   " . date)
         call append(6, "@Description: ")
         call append(7, "\"\"\"")
         call append(8, "")
@@ -1050,33 +1050,33 @@ function! s:SetTitle()
     elseif &filetype == 'sh'
         call setline(1, "#!/bin/bash")
         call append(1, "# Author: " . g:author)
-        call append(2, "# Email: " . g:email)
-        call append(3, "# Date: " . date)
+        call append(2, "# Email:  " . g:email)
+        call append(3, "# Date:   " . date)
         call append(4, "")
     elseif &filetype == 'c'
         call setline(1, "/*************************************************************************")
-        call append(1, " * @file: ".expand("%"))
+        call append(1, " * @file:   ".expand("%"))
         call append(2, " * @author: " . g:author)
-        call append(3, " * @email: " . g:email)
-        call append(4, " * @date: " . date)
+        call append(3, " * @email:  " . g:email)
+        call append(4, " * @date:   " . date)
         call append(5, " * @description: ")
         call append(6, " ************************************************************************/")
         call append(7, "")
     elseif &filetype == 'cpp'
         call setline(1, "/*************************************************************************")
-        call append(1, " * @file: ".expand("%"))
+        call append(1, " * @file:   ".expand("%"))
         call append(2, " * @author: " . g:author)
-        call append(3, " * @email: " . g:email)
-        call append(4, " * @date: " . date)
+        call append(3, " * @email:  " . g:email)
+        call append(4, " * @date:   " . date)
         call append(5, " * @description: ")
         call append(6, " ************************************************************************/")
         call append(7, "")
     elseif &filetype == 'java'
         call setline(1, "/*")
-        call append(1, " * @file: ".expand("%"))
+        call append(1, " * @file:   ".expand("%"))
         call append(2, " * @author: " . g:author)
-        call append(3, " * @email: " . g:email)
-        call append(4, " * @date: " . date)
+        call append(3, " * @email:  " . g:email)
+        call append(4, " * @date:   " . date)
         call append(5, " */")
         call append(6, "")
         call append(7, "public class ".expand("%:r"))
@@ -1088,10 +1088,10 @@ function! s:SetTitle()
         call append(13, "")
     elseif &filetype == 'javascript'
         call setline(1, "/**")
-        call append(1, " * @file: ".expand("%"))
+        call append(1, " * @file:   ".expand("%"))
         call append(2, " * @author: " . g:author)
-        call append(3, " * @email: " . g:email)
-        call append(4, " * @date: " . date)
+        call append(3, " * @email:  " . g:email)
+        call append(4, " * @date:   " . date)
         call append(5, " */")
         call append(6, "")
     endif

@@ -2,7 +2,7 @@
 " Vimore
 " 作者: BiaoZyx
 " 邮箱: BiaoZyx@outlook.com
-" 版本: 3.19
+" 版本: 3.19.1
 " ============================================================
 "  _   ___
 " | | / (_)_ _  ___  _______
@@ -563,6 +563,9 @@ function! ToggleCommentVisual()
     let all_commented = 1
     for l in range(start_line, end_line)
         let trimmed = substitute(getline(l), '^\s*', '', '')
+        if trimmed == ''
+            continue    " 空行跳过
+        endif
         if trimmed !~ '^' . symbol_re
             let all_commented = 0
             break
@@ -575,14 +578,17 @@ function! ToggleCommentVisual()
         let body = strpart(line, strlen(indent))
 
         if all_commented
-            " 只去掉一层注释：'# # xxx' 里的第二个 '#' 很可能就是正文
-            " （markdown 标题、shell 的 #hashtag 等），整层剥掉会吃掉文本
+            " 取消注释
             if comment_end != ''
                 let body = substitute(body, '^' . symbol_re . '\s*\(.\{-}\)' . end_re . '$', '\1', '')
             else
                 let body = substitute(body, '^' . symbol_re . '\s*', '', '')
             endif
         else
+            " 加注释，但空行跳过
+            if body == ''
+                continue
+            endif
             let body = comment . body
             if comment_end != ''
                 let body = body . comment_end

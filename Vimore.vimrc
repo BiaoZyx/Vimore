@@ -1022,7 +1022,8 @@ let g:netrw_sort_sequence='[\/]$,*'
 " ============================================================
 " 20. 文件头自动生成
 " ============================================================
-autocmd BufNewFile *.py,*.go,*.sh,*.c,*.cpp,*.java,*.js,*.ts,*.rs,*.lua call s:SetTitle()
+" autocmd BufNewFile *.py,*.go,*.sh,*.c,*.cpp,*.java,*.js,*.ts,*.rs,*.lua call s:SetTitle()
+autocmd BufNewFile *.py,*.go,*.sh,*.java,*.js,*.ts,*.rs,*.lua call s:SetTitle()
 
 function! s:SetTitle()
     if line('$') > 1 && getline(1) != ''

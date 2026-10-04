@@ -32,6 +32,9 @@ Vimore 是一份纯 Vimscript 写的 `.vimrc`，目标是：
 - 不想被插件生态绑架，但又觉得原版 Vim 太「素」
 - 喜欢用纯 Vimscript 折腾配置的人
 
+Vimore 面向的是折腾意愿中等的 Vim 用户：想用 Vim，但不想为它搭一套插件生态。
+典型路径是 nano → vim → helix/neovim → 某个 Neovim 框架 → 回到 vim。走完一圈的人会发现，真正想要的不是「插件堆出来的 IDE」，而是「编辑器本身可编程」——这正是 Vim 的原初设计。Vimore 把这份「可编程」包装成一个开箱即用的配置：纯 Vimscript，无插件管理器，无 LSP，无外部依赖，但功能齐全。
+
 ---
 
 ## 主要特性

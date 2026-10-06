@@ -94,3 +94,122 @@ Vimore 面向的是折腾意愿中等的 Vim 用户：想用 Vim，但不想为�
 ```vim
 let author = "Change it in ~/.vimrc"
 let email  = "Change it in ~/.vimrc"
+```
+
+---
+
+## 可选：启用 LSP（yegappan/lsp）
+
+Vimore 本身不依赖插件，但如果你想要补全、跳转定义、悬停文档这些 IDE 能力，
+可以额外挂一个纯 Vim9script 写的 LSP 客户端：[yegappan/lsp](https://github.com/yegappan/lsp)。
+
+它不依赖 Node.js、Python 或任何包管理器，注册逻辑直白，和你手写映射的风格一致。
+代价是必须 **Vim 9.0 以上**，并且要自己提前装好各语言的 LSP 服务器。
+
+### 1. 安装插件（原生 pack，不用包管理器）
+
+```bash
+mkdir -p ~/.vim/pack/lsp/opt
+git clone https://github.com/yegappan/lsp.git ~/.vim/pack/lsp/opt/lsp
+```
+
+### 2. 安装语言服务器
+
+Vimore 面向 Python、C、C++、Shell 四种语言，对应服务器如下：
+
+```bash
+# C / C++：clangd（通常随 LLVM 或发行版提供）
+sudo apt install clangd        # Debian / Ubuntu
+# 或 sudo pacman -S clang
+
+# Python：pyright
+npm i -g pyright
+
+# Shell：bash-language-server（需要 Node.js 14+）
+npm i -g bash-language-server
+```
+
+装完后确认它们在 `$PATH` 里：
+
+```bash
+which clangd pyright-langserver bash-language-server
+```
+
+如果 `which` 找不到，说明 npm 全局 bin 目录没进 `$PATH`。
+在 `~/.zshrc`（不是 `.zprofile`，非登录 shell 不读它）里加：
+
+```bash
+export PATH="$HOME/.npm-global/bin:$PATH"
+```
+
+### 3. 复制 `plugins.vim` 示例
+
+Vimore 的插件加载逻辑放在 `~/.vim/plugin/plugins.vim`，内容如下。
+把它拷到你的 `~/.vim/plugin/` 目录即可，**不需要在 `.vimrc` 里手动 source**——
+`~/.vim/plugin/` 下的 `.vim` 文件会在 Vim 启动时自动加载。
+
+```vim
+" ============================================================
+" plugins.vim — Vimore 可选插件加载
+" 放在 ~/.vim/plugin/ 下，Vim 启动时自动 source
+" ============================================================
+
+" ------------------------------------------------------------
+" LSP（yegappan/lsp，需要 Vim 9.0+）
+" ------------------------------------------------------------
+if has('vim9script')
+    " 从 ~/.vim/pack/lsp/opt/ 加载
+    packadd lsp
+
+    " 注册语言服务器
+    " path 建议写绝对路径，避免 Vim 从不同 shell 启动时找不到
+    call LspAddServer([
+        \ #{
+        \   name: 'clangd',
+        \   filetype: ['c', 'cpp'],
+        \   path: 'clangd',
+        \   args: ['--background-index']
+        \ },
+        \ #{
+        \   name: 'pyright',
+        \   filetype: ['python'],
+        \   path: '/home/YOUR_NAME/.npm-global/bin/pyright-langserver',
+        \   args: ['--stdio']
+        \ },
+        \ #{
+        \   name: 'bash-language-server',
+        \   filetype: ['sh', 'bash'],
+        \   path: '/home/YOUR_NAME/.npm-global/bin/bash-language-server',
+        \   args: ['start']
+        \ }
+        \ ])
+
+    " 限制补全弹出菜单高度，避免遮挡代码
+    set pumheight=15
+endif
+```
+
+**注意**：把 `/home/YOUR_NAME/` 换成你自己的家目录路径。
+如果 `clangd`、`pyright-langserver`、`bash-language-server` 确实在 `$PATH` 里，
+也可以只写命令名。
+
+### 4. 常用操作
+
+配好后打开对应文件，LSP 会自动启动。常用命令：
+
+- `:LspGotoDefinition` — 跳转定义
+- `:LspHover` — 悬停文档
+- `:LspDiagShow` — 查看全部诊断
+- 插入模式 `<C-x><C-o>` — 触发补全
+
+### 5. 注意事项
+
+- **`wildignore` 里有 `*.exe` 时**，`path` 不要以 `.exe` 结尾，
+  否则 `expand()` 会返回空字符串导致服务器找不到。
+- **LSP 会接管 `omnifunc`**。Vimore 第 12 节给各文件类型设了原生 `omnifunc`，
+  LSP 启动后可能覆盖它。想要 LSP 补全就用它，不想的话可以在
+  `SetOmniFunc()` 里加判断跳过。
+- **插件本体不要进 Git**。在 Vimore 仓库的 `.gitignore` 里加：
+  ```gitignore
+  .vim/pack/
+  ```

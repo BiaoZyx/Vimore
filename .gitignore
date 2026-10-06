@@ -1,0 +1,8 @@
+# LSP 插件（外部依赖，不进仓库）
+.vim/pack/lsp/
+
+# Vim 运行时生成的文件
+.vim/undodir/
+.vim/backupdir/
+.vim/swapdir/
+.vim/netrwhis/

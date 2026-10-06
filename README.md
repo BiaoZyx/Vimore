@@ -204,12 +204,5 @@ endif
 
 ### 5. 注意事项
 
-- **`wildignore` 里有 `*.exe` 时**，`path` 不要以 `.exe` 结尾，
-  否则 `expand()` 会返回空字符串导致服务器找不到。
-- **LSP 会接管 `omnifunc`**。Vimore 第 12 节给各文件类型设了原生 `omnifunc`，
-  LSP 启动后可能覆盖它。想要 LSP 补全就用它，不想的话可以在
-  `SetOmniFunc()` 里加判断跳过。
-- **插件本体不要进 Git**。在 Vimore 仓库的 `.gitignore` 里加：
-  ```gitignore
-  .vim/pack/
-  ```
+- **`wildignore` 里有 `*.exe` 时**，`path` 不要以 `.exe` 结尾，否则 `expand()` 会返回空字符串导致服务器找不到。
+- **LSP 会接管 `omnifunc`**。Vimore 第 12 节给各文件类型设了原生 `omnifunc`，LSP 启动后可能覆盖它。想要 LSP 补全就用它，不想的话可以在`SetOmniFunc()` 里加判断跳过。

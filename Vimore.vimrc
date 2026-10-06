@@ -2,7 +2,7 @@
 " Vimore
 " 作者: BiaoZyx
 " 邮箱: BiaoZyx@outlook.com
-" 版本: 3.19.4
+" 版本: 3.19.5
 " ============================================================
 "  _   ___
 " | | / (_)_ _  ___  _______
@@ -13,8 +13,8 @@
 " 备注: 普通vim可能剪切板支持不好，建议安装gvim以使用vim
 " ============================================================
 " 记得更改这个，将用于文件头生成
-let author = "BiaoZyx"
-let email  = "BiaoZyx@outlook.com"
+let author = "Change it in ~/.vimrc"
+let email  = "Change it in ~/.vimrc"
 
 " ============================================================
 " 1. 基础设置
@@ -615,6 +615,12 @@ tnoremap <Esc><Esc> <C-\><C-n>
 
 " 强制透传 Ctrl-C
 tnoremap <C-c> <Cmd>call term_sendkeys(bufnr('%'), nr2char(3))<CR>
+
+" 窗口切换
+tnoremap <C-S-h> <C-w>h
+tnoremap <C-S-j> <C-w>j
+tnoremap <C-S-k> <C-w>k
+tnoremap <C-S-l> <C-w>l
 
 " 终端复制（退出终端模式后复制到系统剪切板）
 tnoremap <C-S-c> <C-\><C-n>"+yy

@@ -844,7 +844,6 @@ nnoremap <C-l> <C-w>l
 nnoremap <silent> <A-Left> :tabp<CR>
 nnoremap <silent> <A-Right> :tabn<CR>
 nnoremap <silent> <C-t> :tabnew<CR>
-nnoremap <silent> <C-w> :tabclose<CR>
 
 " 全选复制
 vnoremap <C-x> "+x

@@ -2,7 +2,7 @@
 " Vimore
 " 作者: BiaoZyx
 " 邮箱: BiaoZyx@outlook.com
-" 版本: 3.20
+" 版本: 3.20.1
 " ============================================================
 "  _   ___
 " | | / (_)_ _  ___  _______
@@ -229,7 +229,7 @@ set showbreak=↪
 " Markdown, 纯文本等不显示自动换行符
 augroup SoftWrapForText
   autocmd!
-  autocmd FileType markdown,text,org,gitcommit,rst,asciidoc,tex setlocal wrap showbreak=
+  autocmd FileType markdown,text,org,gitcommit,rst,asciidoc,tex setlocal wrap showbreak=NONE
 augroup END
 
 " 各文件类型自定义缩进

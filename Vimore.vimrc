@@ -229,8 +229,7 @@ set showbreak=↪
 " Markdown, 纯文本等不显示自动换行符
 augroup SoftWrapForText
   autocmd!
-  autocmd FileType markdown,text,gitcommit setlocal wrap
-  autocmd FileType markdown,text,gitcommit setlocal showbreak=
+  autocmd FileType markdown,text,org,gitcommit,rst,asciidoc,tex setlocal wrap showbreak=
 augroup END
 
 " 各文件类型自定义缩进

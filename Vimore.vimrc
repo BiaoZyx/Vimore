@@ -2,7 +2,7 @@
 " Vimore
 " 作者: BiaoZyx
 " 邮箱: BiaoZyx@outlook.com
-" 版本: 3.19.5
+" 版本: 3.20
 " ============================================================
 "  _   ___
 " | | / (_)_ _  ___  _______
@@ -225,6 +225,13 @@ set textwidth=0                " 禁止自动换行
 set nowrap
 set nolinebreak
 set showbreak=↪
+
+" Markdown, 纯文本等不显示自动换行符
+augroup SoftWrapForText
+  autocmd!
+  autocmd FileType markdown,text,gitcommit setlocal wrap
+  autocmd FileType markdown,text,gitcommit setlocal showbreak=
+augroup END
 
 " 各文件类型自定义缩进
 autocmd FileType python,sh setlocal tabstop=4 shiftwidth=4 softtabstop=4 expandtab

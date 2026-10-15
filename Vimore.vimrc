@@ -2,7 +2,7 @@
 " Vimore
 " 作者: BiaoZyx
 " 邮箱: BiaoZyx@outlook.com
-" 版本: 3.21
+" 版本: 3.21.1
 " ============================================================
 "  _   ___
 " | | / (_)_ _  ___  _______
@@ -764,24 +764,25 @@ function! SmartEnter()
     if col > 0 && col < len(line)
         let before = line[col - 1]
         let after = line[col]
-        if before == '{' && after == '}'
-            return "\<C-o>:call SplitBrace()\<CR>"
+        let pairs = {'{': '}', '(': ')', '[': ']'}
+        if has_key(pairs, before) && after == pairs[before]
+            return "\<C-o>:call SplitPair()\<CR>"
         endif
     endif
 
     return "\<CR>"
 endfunction
 
-function! SplitBrace()
+function! SplitPair()
     let lnum = line('.')
     let line = getline(lnum)
     let col = col('.') - 1
     let indent = matchstr(line, '^\s*')
     let inner = indent . repeat(' ', &shiftwidth)
 
-    let line1 = line[:col-1]            " 到 { 为止
-    let line2 = inner                   " 内层缩进
-    let line3 = indent . line[col:]     " 从 } 开始
+    let line1 = line[:col-1]
+    let line2 = inner
+    let line3 = indent . line[col:]
 
     call setline(lnum, line1)
     call append(lnum, line2)

@@ -2,7 +2,7 @@
 " Vimore
 " 作者: BiaoZyx
 " 邮箱: BiaoZyx@outlook.com
-" 版本: 3.20.1
+" 版本: 3.21
 " ============================================================
 "  _   ___
 " | | / (_)_ _  ___  _______
@@ -753,8 +753,42 @@ set wildignore+=*.o,*.a,*.obj,*.class
 
 inoremap <silent><expr> <TAB> pumvisible() ? "\<C-n>" : "\<TAB>"
 inoremap <silent><expr> <S-TAB> pumvisible() ? "\<C-p>" : "\<S-TAB>"
-inoremap <silent><expr> <CR> pumvisible() ? "\<C-y>" : "\<CR>"
-"inoremap <silent><expr> <CR> pumvisible() ? "\<C-y>" : (SmartEnterCondition() ? "\<C-o>:call SmartEnter()\<CR>" : "\<CR>")
+
+" <CR> 智能拆分
+inoremap <silent><expr> <CR> pumvisible() ? "\<C-y>" : SmartEnter()
+
+function! SmartEnter()
+    let line = getline('.')
+    let col = col('.') - 1
+
+    if col > 0 && col < len(line)
+        let before = line[col - 1]
+        let after = line[col]
+        if before == '{' && after == '}'
+            return "\<C-o>:call SplitBrace()\<CR>"
+        endif
+    endif
+
+    return "\<CR>"
+endfunction
+
+function! SplitBrace()
+    let lnum = line('.')
+    let line = getline(lnum)
+    let col = col('.') - 1
+    let indent = matchstr(line, '^\s*')
+    let inner = indent . repeat(' ', &shiftwidth)
+
+    let line1 = line[:col-1]            " 到 { 为止
+    let line2 = inner                   " 内层缩进
+    let line3 = indent . line[col:]     " 从 } 开始
+
+    call setline(lnum, line1)
+    call append(lnum, line2)
+    call append(lnum + 1, line3)
+
+    call cursor(lnum + 1, len(line2) + 1)
+endfunction
 
 filetype plugin on
 

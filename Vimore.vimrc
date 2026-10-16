@@ -2,7 +2,7 @@
 " Vimore
 " 作者: BiaoZyx
 " 邮箱: BiaoZyx@outlook.com
-" 版本: 3.21.1
+" 版本: 3.22
 " ============================================================
 "  _   ___
 " | | / (_)_ _  ___  _______
@@ -259,8 +259,8 @@ set gdefault                  " 默认全局替换
 set backspace=indent,eol,start
 set whichwrap+=<,>,h,l,b,s
 set scrolloff=5
-set sidescrolloff=5
-set sidescroll=5
+set sidescrolloff=8
+set sidescroll=10
 set virtualedit=block
 set selection=inclusive " 光标下字符也选中
 "set selectmode=mouse,key
@@ -268,6 +268,10 @@ set mouse=a
 set mousemodel=popup
 set ttymouse=sgr
 set keymodel=startsel,stopsel
+
+" 使用 j, k 默认切换屏幕行 (可视模式不生效)
+nnoremap <expr> j v:count ? 'j' : 'gj'
+nnoremap <expr> k v:count ? 'k' : 'gk'
 
 " 插入模式下设置为闪烁竖线 (solid vertical bar)
 let &t_SI = "\<Esc>[5 q"

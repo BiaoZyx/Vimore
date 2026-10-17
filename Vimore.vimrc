@@ -2,7 +2,7 @@
 " Vimore
 " 作者: BiaoZyx
 " 邮箱: BiaoZyx@outlook.com
-" 版本: 3.22
+" 版本: 3.22.1
 " ============================================================
 "  _   ___
 " | | / (_)_ _  ___  _______
@@ -224,12 +224,23 @@ set lbr
 set textwidth=0                " 禁止自动换行
 set nowrap
 set nolinebreak
-set showbreak=↪
+set showbreak=
 
-" Markdown, 纯文本等不显示自动换行符
+" 文档格式：软换行、词边界换行、不显示折行提示符
+" 其他格式：不折行、显示 ↪
+let s:text_fts = ['markdown', 'text', 'org', 'gitcommit', 'rst', 'asciidoc', 'tex']
+
+function! s:SetWrapOptions(...)
+  if index(s:text_fts, &filetype) >= 0
+    setlocal wrap linebreak showbreak=
+  else
+    setlocal nowrap showbreak=↪
+  endif
+endfunction
+
 augroup SoftWrapForText
   autocmd!
-  autocmd FileType markdown,text,org,gitcommit,rst,asciidoc,tex setlocal wrap showbreak=NONE
+  autocmd FileType,BufEnter,WinEnter * call timer_start(0, function('s:SetWrapOptions'))
 augroup END
 
 " 各文件类型自定义缩进

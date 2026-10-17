@@ -233,6 +233,7 @@ let s:text_fts = ['markdown', 'text', 'org', 'gitcommit', 'rst', 'asciidoc', 'te
 function! s:SetWrapOptions(...)
   if index(s:text_fts, &filetype) >= 0
     setlocal wrap linebreak showbreak=
+    setlocal colorcolumn= breakindent
   else
     setlocal nowrap showbreak=↪
   endif

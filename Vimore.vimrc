@@ -2,7 +2,7 @@
 " Vimore
 " 作者: BiaoZyx
 " 邮箱: BiaoZyx@outlook.com
-" 版本: 3.23
+" 版本: 3.24
 " ============================================================
 "  _   ___
 " | | / (_)_ _  ___  _______
@@ -1099,6 +1099,12 @@ function! s:SetTitle()
         call append(6, "@Description: ")
         call append(7, "\"\"\"")
         call append(8, "")
+    elseif &filetype == 'lua'
+        call setline(1, "#!/usr/bin/env lua")
+        call append(1, "-- Author: " . g:author)
+        call append(2, "-- Email:  " . g:email)
+        call append(3, "-- Date:   " . date)
+        call append(4, "")
     elseif &filetype == 'go'
         call setline(1, "package main")
         call append(1, "")

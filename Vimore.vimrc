@@ -2,7 +2,7 @@
 " Vimore
 " 作者: BiaoZyx
 " 邮箱: BiaoZyx@outlook.com
-" 版本: 3.24
+" 版本: 3.25
 " ============================================================
 "  _   ___
 " | | / (_)_ _  ___  _______
@@ -1181,13 +1181,21 @@ function! s:SetTitle()
         call append(11, "    }")
         call append(12, "}")
         call append(13, "")
-    elseif &filetype == 'javascript'
+    elseif &filetype == 'javascript' || &filetype == 'typescript'
         call setline(1, "/**")
         call append(1, " * @file:   ".expand("%"))
         call append(2, " * @author: " . g:author)
         call append(3, " * @email:  " . g:email)
         call append(4, " * @date:   " . date)
         call append(5, " */")
+        call append(6, "")
+    elseif &filetype == 'rust'
+        call setline(1, "//")
+        call append(1, "// @file:   ".expand("%"))
+        call append(2, "// @author: " . g:author)
+        call append(3, "// @email:  " . g:email)
+        call append(4, "// @date:   " . date)
+        call append(5, "//")
         call append(6, "")
     endif
     normal G
@@ -1213,6 +1221,27 @@ highlight TabLine       ctermfg=245 ctermbg=237 cterm=NONE
 highlight TabLineSel    ctermfg=220 ctermbg=235 cterm=bold
 highlight TabLineFill   ctermbg=237 cterm=NONE
 
+" 按显示宽度截断，避免把多字节字符切成半个
+function! s:StrTruncate(str, cells) abort
+    if a:cells < 1
+        return ''
+    endif
+    if strdisplaywidth(a:str) <= a:cells
+        return a:str
+    endif
+    let l:out = ''
+    let l:i = 0
+    while l:i < strchars(a:str)
+        let l:cand = l:out . strcharpart(a:str, l:i, 1)
+        if strdisplaywidth(l:cand) > a:cells - 1
+            break
+        endif
+        let l:out = l:cand
+        let l:i += 1
+    endwhile
+    return l:out
+endfunction
+
 function! MyTabLine()
     let s = ''
     let t = tabpagenr()
@@ -1229,13 +1258,13 @@ function! MyTabLine()
         if bufname == '' | let bufname = '[No Name]' | endif
 
         let name_len = width - len(i . ':') - 2 - padding
-        if len(bufname) > name_len
-            let bufname = bufname[:name_len-2] . '…'
+        if strdisplaywidth(bufname) > name_len
+            let bufname = s:StrTruncate(bufname, name_len) . '…'
         endif
 
         let modified = getbufvar(buflist[winnr - 1], '&modified') ? '+' : ''
         let label = ' ' . i . ':' . bufname . modified
-        let label = label . repeat(' ', width - len(label))
+        let label = label . repeat(' ', max([0, width - strdisplaywidth(label)]))
 
         if i == t
             let s .= '%#TabLineSel#' . label
@@ -1312,6 +1341,14 @@ function! AddPairCode(code)
     call AddPair(nr2char(a:code))
 endfunction
 
+function! GitCommit() abort
+    let l:msg = input('Commit: ')
+    if empty(l:msg)
+        return
+    endif
+    execute '!git commit -m ' . shellescape(l:msg)
+endfunction
+
 " === 菜单主体 ===
 let g:leader_menu = {
             \ 'w':  {
@@ -1354,6 +1391,7 @@ let g:leader_menu = {
             \ '{': ['花括号',  ':call AddPair("{")<CR>'],
             \ '"': ['双引号',  ':call AddPairCode(34)<CR>'],
             \ "'": ['单引号',  ':call AddPairCode(39)<CR>'],
+            \ '<': ['尖括号',  ':call AddPair("<")<CR>'],
             \ },
             \ },
             \ 'r':  ['查看寄存器',        ':reg<CR>'],
@@ -1379,7 +1417,7 @@ let g:leader_menu = {
             \ 'd': ['git diff',       ':!git diff<CR>'],
             \ 'l': ['git log',        ':!git log --oneline --graph<CR>'],
             \ 'a': ['git add',        ':!git add %<CR>'],
-            \ 'c': ['git commit',     ':!git commit -m "<C-r>=input(''Commit: '')<CR>"<CR>'],
+            \ 'c': ['git commit',     function('GitCommit')],
             \ 'p': ['git push',       ':!git push<CR>'],
             \ 'P': ['git pull',       ':!git pull<CR>'],
             \ },
@@ -1445,7 +1483,8 @@ let s:verbose_funcs = [
             \ 'SaveAndClear',
             \ 'StripTrailingWhitespaceManual',
             \ 'FormatCode',
-            \ 'CheckCode'
+            \ 'CheckCode',
+            \ 'GitCommit'
             \ ]
 function! s:RunMenuItem(item)
     let l:Action = a:item[1]

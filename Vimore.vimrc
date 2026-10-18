@@ -496,15 +496,46 @@ endfunction
 " ============================================================
 " 9. 复制粘贴 (手动切换内置/系统寄存器)
 " ============================================================
+" Wayland 剪贴板桥接：Vim 内置的 "+ 寄存器只走 X11/XWayland，
+" 在 Sway/Wayland 下不会落到系统剪切板，这里显式调用 wl-copy/wl-paste。
+function! WlClipboardYank(reg) abort
+    if a:reg ==# '+' && executable('wl-copy')
+        call system('wl-copy', getreg('+'))
+    endif
+endfunction
+
+function! WlClipboardPaste() abort
+    if executable('wl-paste')
+        let l:text = system('wl-paste -n')
+        " 只有真的读到内容才覆盖，避免把本来可用的 "+ 寄存器清空
+        if v:shell_error == 0 && !empty(l:text)
+            call setreg('+', l:text)
+        endif
+    endif
+endfunction
+
+if executable('wl-copy')
+    augroup VimoreWaylandClipboard
+        autocmd!
+        autocmd TextYankPost * call WlClipboardYank(v:event.regname)
+    augroup END
+endif
+
 " 复制到系统剪切板：<Leader>y
 nnoremap <Leader>y "+yy
 vnoremap <Leader>y "+y
 
 " 从系统剪切板粘贴：<Leader>p / <Leader>P
-nnoremap <Leader>p "+p
-nnoremap <Leader>P "+P
-vnoremap <Leader>p "+p
-vnoremap <Leader>P "+P
+nnoremap <Leader>p :<C-u>call WlClipboardPaste()<CR>"+p
+nnoremap <Leader>P :<C-u>call WlClipboardPaste()<CR>"+P
+vnoremap <Leader>p :<C-u>call WlClipboardPaste()<CR>gv"+p
+vnoremap <Leader>P :<C-u>call WlClipboardPaste()<CR>gv"+P
+
+" 直接按 "+p / "+P 也先回读系统剪切板
+nnoremap <silent> "+p :<C-u>call WlClipboardPaste()<CR>"+p
+nnoremap <silent> "+P :<C-u>call WlClipboardPaste()<CR>"+P
+vnoremap <silent> "+p :<C-u>call WlClipboardPaste()<CR>gv"+p
+vnoremap <silent> "+P :<C-u>call WlClipboardPaste()<CR>gv"+P
 
 " 粘贴模式开关
 set pastetoggle=<F2>
@@ -1143,7 +1174,7 @@ function! s:SetTitle()
         call append(4, " * @date:   " . date)
         call append(5, " */")
         call append(6, "")
-        call append(7, "public class ".expand("%:r"))
+        call append(7, "public class ".fnamemodify(expand("%:r"), ":t"))
         call append(8, "{")
         call append(9, "    public static void main(String[] args) {")
         call append(10, "        System.out.println(\"Hello, World!\");")
@@ -1333,8 +1364,8 @@ let g:leader_menu = {
             \ 'Z': ['全部展开',       ':normal! zR<CR>'],
             \ },
             \ 'y':  ['复制到系统剪切板',  ':normal! "+yy<CR>'],
-            \ 'p':  ['从系统剪切板粘贴',  ':normal! "+p<CR>'],
-            \ 'P':  ['从系统剪切板粘贴(前)', ':normal! "+P<CR>'],
+            \ 'p':  ['从系统剪切板粘贴',  ':call WlClipboardPaste() | normal! "+p<CR>'],
+            \ 'P':  ['从系统剪切板粘贴(前)', ':call WlClipboardPaste() | normal! "+P<CR>'],
             \ 's':  {
             \ 'name': '整理',
             \ 'd': ['删除空行',       ':silent! g/^\s*$/d<CR>'],

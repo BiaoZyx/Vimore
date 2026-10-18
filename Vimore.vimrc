@@ -2,7 +2,7 @@
 " Vimore
 " 作者: BiaoZyx
 " 邮箱: BiaoZyx@outlook.com
-" 版本: 3.25
+" 版本: 3.26
 " ============================================================
 "  _   ___
 " | | / (_)_ _  ___  _______
@@ -983,81 +983,88 @@ func! FormatCode()
     let ft = &filetype
     let formatted = 0
     let output = ''
+    let file = shellescape(expand('%'))
+
+    " 依次尝试，第一个可执行的用上
+    let candidates = []
 
     if ft == 'python'
-        if executable('black')
-            let output = system('black --skip-string-normalization ' . shellescape(expand('%')) . ' 2>&1')
-            let formatted = 1
-        elseif executable('autopep8')
-            let output = system('autopep8 -i --aggressive --max-line-length=120 ' . shellescape(expand('%')) . ' 2>&1')
-            let formatted = 1
-        endif
-        if formatted && executable('isort')
-            let output .= system('isort ' . shellescape(expand('%')) . ' 2>&1')
-        endif
-        if !formatted
-            execute "normal gg=G"
-        endif
+        call add(candidates, ['black', 'black --skip-string-normalization ' . file])
+        call add(candidates, ['autopep8', 'autopep8 -i --aggressive --max-line-length=120 ' . file])
+        call add(candidates, ['ruff', 'ruff format ' . file])
     elseif ft == 'go'
-        if executable('gofmt')
-            let output = system('gofmt -w ' . shellescape(expand('%')) . ' 2>&1')
-            let formatted = 1
-        endif
-        if formatted && executable('goimports')
-            let output .= system('goimports -w ' . shellescape(expand('%')) . ' 2>&1')
-        endif
-        if !formatted
-            execute "normal gg=G"
-        endif
-    elseif ft == 'javascript' || ft == 'typescript'
-        if executable('prettier')
-            let output = system('prettier --write ' . shellescape(expand('%')) . ' 2>&1')
-            let formatted = 1
-        elseif executable('eslint')
-            let output = system('eslint --fix ' . shellescape(expand('%')) . ' 2>&1')
-            let formatted = 1
-        endif
-        if !formatted
-            execute "normal gg=G"
-        endif
-    elseif ft == 'c' || ft == 'cpp'
-        if executable('clang-format')
-            let output = system('clang-format -i ' . shellescape(expand('%')) . ' 2>&1')
-            let formatted = 1
-        endif
-        if !formatted
-            execute "normal gg=G"
-        endif
+        call add(candidates, ['gofmt', 'gofmt -w ' . file])
+        call add(candidates, ['goimports', 'goimports -w ' . file])
+    elseif ft == 'rust'
+        call add(candidates, ['rustfmt', 'rustfmt ' . file])
+        call add(candidates, ['cargo', 'cargo fmt'])
+    elseif ft == 'lua'
+        call add(candidates, ['stylua', 'stylua ' . file])
+    elseif ft =~? '^javascript\|^typescript'
+        call add(candidates, ['prettier', 'prettier --write ' . file])
+        call add(candidates, ['eslint', 'eslint --fix ' . file])
+    elseif ft =~? '^json'
+        call add(candidates, ['prettier', 'prettier --write ' . file])
+        call add(candidates, ['jq', 'jq . ' . file . ' > ' . file . '.tmp && mv ' . file . '.tmp ' . file])
+        call add(candidates, ['python3', 'python3 -m json.tool ' . file . ' > ' . shellescape(expand('%:r')) . '.tmp && mv ' . shellescape(expand('%:r')) . '.tmp ' . file])
+    elseif ft == 'yaml' || ft == 'yml'
+        call add(candidates, ['prettier', 'prettier --write ' . file])
+        call add(candidates, ['yq', 'yq -i ". style=\"\\"\\"" ' . file])
+    elseif ft == 'markdown'
+        call add(candidates, ['prettier', 'prettier --write ' . file])
+        call add(candidates, ['mdformat', 'mdformat ' . file])
+    elseif ft =~? '^html\|^css\|^scss\|^less'
+        call add(candidates, ['prettier', 'prettier --write ' . file])
+    elseif ft =~? '^c$\|^cpp$\|^cuda$'
+        call add(candidates, ['clang-format', 'clang-format -i ' . file])
     elseif ft == 'java'
-        if executable('astyle')
-            let output = system('astyle --style=java --suffix=none ' . shellescape(expand('%')) . ' 2>&1')
+        call add(candidates, ['google-java-format', 'google-java-format -i ' . file])
+        call add(candidates, ['astyle', 'astyle --style=java --suffix=none ' . file])
+    elseif ft =~? '^sh$\|^bash$'
+        call add(candidates, ['shfmt', 'shfmt -w ' . file])
+    elseif ft == 'toml'
+        call add(candidates, ['taplo', 'taplo format ' . file])
+    elseif ft == 'xml'
+        call add(candidates, ['xmllint', 'xmllint --format ' . file . ' -o ' . file])
+    elseif ft == 'sql'
+        call add(candidates, ['sqlfluff', 'sqlfluff fix ' . file])
+        call add(candidates, ['sqlformat', 'sqlformat -r -k upper -i indent ' . file . ' -o ' . file])
+    elseif ft == 'ruby'
+        call add(candidates, ['rubocop', 'rubocop -a ' . file])
+    elseif ft == 'php'
+        call add(candidates, ['php-cs-fixer', 'php-cs-fixer fix ' . file])
+        call add(candidates, ['pint', 'pint ' . file])
+    elseif ft == 'zig'
+        call add(candidates, ['zig', 'zig fmt ' . file])
+    elseif ft == 'nix'
+        call add(candidates, ['alejandra', 'alejandra ' . file])
+        call add(candidates, ['nixpkgs-fmt', 'nixpkgs-fmt ' . file])
+    elseif ft == 'cmake'
+        call add(candidates, ['cmake-format', 'cmake-format -i ' . file])
+    endif
+
+    " 取第一个可执行的
+    for [exe, cmd] in candidates
+        if executable(exe)
+            let output = system(cmd . ' 2>&1')
             let formatted = 1
-        endif
-        if !formatted
-            execute "normal gg=G"
-        endif
-    elseif ft == 'json'
-        if executable('prettier')
-            let output = system('prettier --write ' . shellescape(expand('%')) . ' 2>&1')
-            let formatted = 1
-        elseif executable('python3')
-            let output = system('python3 -m json.tool ' . shellescape(expand('%')) . ' > ' . shellescape(expand('%:r')) . '.tmp && mv ' . shellescape(expand('%:r')) . '.tmp ' . shellescape(expand('%')) . ' 2>&1')
-            let formatted = 1
-        endif
-        if !formatted
-            execute "normal gg=G"
-        endif
-    else
+            break
+        end
+    endfor
+
+    if !formatted
         execute "normal gg=G"
     endif
 
-    " 重载文件，恢复光标
     silent! execute "e!"
     call setpos('.', pos)
 
-    " 显示输出
     if empty(output)
-        echo "格式化完成"
+        if formatted
+            echo "格式化完成"
+        else
+            echo "已用 gg=G 基础缩进"
+        endif
     else
         echo output
     endif

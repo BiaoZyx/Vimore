@@ -2,7 +2,7 @@
 " Vimore
 " 作者: BiaoZyx
 " 邮箱: BiaoZyx@outlook.com
-" 版本: 3.23
+" 版本: 3.24
 " ============================================================
 "  _   ___
 " | | / (_)_ _  ___  _______
@@ -35,7 +35,8 @@ catch
 endtry
 
 " 启动信息精简：a=缩写, o=覆盖写入, O=覆盖读取, t=启动提示, T=标签页信息
-set shortmess=aoOtT
+" set shortmess=aoOtT
+set shortmess=tT
 
 filetype on
 filetype indent on
@@ -1223,6 +1224,16 @@ endfunction
 
 " == Leader b ==
 " 给可视选区加括号
+" 把 1-based 字节列索引扩展到该字符最后一个字节
+function! s:char_end_col(line, col)
+    let tail = strpart(a:line, a:col - 1)
+    if tail == ''
+        return a:col
+    endif
+    let ch = matchstr(tail, '^.')  " Vim 的 . 匹配一个完整字符
+    return a:col + len(ch) - 1      " len 返回字节数
+endfunction
+
 function! AddPair(pair)
     let map = {'(' : ')', '[' : ']', '{' : '}', '"' : '"', "'" : "'", "<" : ">"}
     if !has_key(map, a:pair)
@@ -1246,12 +1257,14 @@ function! AddPair(pair)
 
     if start_line == end_line
         let line = getline(start_line)
+        let end_col = s:char_end_col(line, end_col)
         let prefix = start_col > 1 ? line[:start_col-2] : ''
         let new_line = prefix . left . line[start_col-1:end_col-1] . right . line[end_col:]
         call setline(start_line, new_line)
     else
         let first = getline(start_line)
         let last = getline(end_line)
+        let end_col = s:char_end_col(last, end_col)
         let prefix = start_col > 1 ? first[:start_col-2] : ''
         call setline(start_line, prefix . left . first[start_col-1:])
         call setline(end_line, last[:end_col-1] . right . last[end_col:])

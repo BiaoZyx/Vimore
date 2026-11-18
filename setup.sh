@@ -71,6 +71,23 @@ backup_rc() {
     fi
 }
 
+backup_target() {
+    if [[ -d "$TARGET" ]]; then
+        local bak="${TARGET}.bak.$(date +%Y%m%d-%H%M%S)"
+        mv "$TARGET" "$bak"
+        echo "已备份旧配置目录: $bak"
+    fi
+}
+
+backup_plugin() {
+    local plugin="$HOME/.vim/plugin/vimore-plugins.vim"
+    if [[ -e "$plugin" || -L "$plugin" ]]; then
+        local bak="${plugin}.bak.$(date +%Y%m%d-%H%M%S)"
+        mv "$plugin" "$bak"
+        echo "已备份旧 LSP 片段: $bak"
+    fi
+}
+
 verify() {
     if command -v vim >/dev/null 2>&1; then
         if vim -Nu "$RC" -es -c 'messages' -c 'qa!' </dev/null >/dev/null 2>&1; then
@@ -101,6 +118,7 @@ case "$MODE" in
             echo "$TARGET 存在但不是目录，请先移走它" >&2
             exit 1
         fi
+        backup_target
         mkdir -p "$TARGET"
         cp -a "$ROOT/Vimore.vimrc" "$ROOT/tutor" \
               "$ROOT/VimMaze.vim" "$ROOT/.vim" "$TARGET/"
@@ -110,6 +128,7 @@ case "$MODE" in
         # 可选 LSP 片段用独立文件名，避免覆盖用户自己的 plugins.vim
         if [[ -f "$ROOT/.vim/plugin/plugins.vim" ]]; then
             mkdir -p "$HOME/.vim/plugin"
+            backup_plugin
             cp "$ROOT/.vim/plugin/plugins.vim" "$HOME/.vim/plugin/vimore-plugins.vim"
             echo "已安装可选 LSP 片段：~/.vim/plugin/vimore-plugins.vim"
         fi

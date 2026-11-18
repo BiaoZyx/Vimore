@@ -13,7 +13,7 @@ Vimore is a pure Vimscript `.vimrc` that turns vanilla Vim into a
 modern, out-of-the-box editor — without any plugin manager, LSP,
 or external dependency. It provides a which-key style menu,
 smart bracket handling, terminal integration, Git shortcuts,
-and more, all in ~1500 lines of Vimscript.
+and more, all in ~2000 lines of Vimscript.
 
 ---
 
@@ -21,7 +21,7 @@ and more, all in ~1500 lines of Vimscript.
 
 Vimore 是一份纯 Vimscript 写的 `.vimrc`，目标是：
 
-- **零插件依赖**：不装任何插件管理器，不拉任何 GitHub 仓库
+- **零插件依赖**：不装任何插件管理器，不拉任何 GitHub 仓库（格式化/检查工具是可选的外部程序）
 - **原生增强**：只用 Vim 自带的能力（自动命令、函数、`popup`、`terminal`、`timers`）
 - **现代化手感**：借鉴 Helix / which-key 的交互，但保持 Vim 的键位逻辑
 - **开箱即用**：拷过去 `source` 一下就能用，不需要额外编译或配置
@@ -33,7 +33,42 @@ Vimore 是一份纯 Vimscript 写的 `.vimrc`，目标是：
 - 喜欢用纯 Vimscript 折腾配置的人
 
 Vimore 面向的是折腾意愿中等的 Vim 用户：想用 Vim，但不想为它搭一套插件生态。
-典型路径是 nano → vim → helix/neovim → 某个 Neovim 框架 → 回到 vim。走完一圈的人会发现，真正想要的不是「插件堆出来的 IDE」，而是「编辑器本身可编程」——这正是 Vim 的原初设计。Vimore 把这份「可编程」包装成一个开箱即用的配置：纯 Vimscript，无插件管理器，无 LSP，无外部依赖，但功能齐全。
+典型路径是 nano → vim → helix/neovim → 某个 Neovim 框架 → 回到 vim。走完一圈的人会发现，真正想要的不是「插件堆出来的 IDE」，而是「编辑器本身可编程」——这正是 Vim 的原初设计。Vimore 把这份「可编程」包装成一个开箱即用的配置：纯 Vimscript，无插件管理器，无 LSP，不强制依赖外部程序，但功能齐全。
+
+---
+
+## 安装
+
+仓库根目录自带 `setup.sh`，最省事：
+
+```bash
+./setup.sh            # 完整安装（仓库 + 软链接）
+./setup.sh --minimal  # 只复制 Vimore.vimrc
+./setup.sh --uninstall
+```
+
+脚本会询问作者名字和邮箱（也可用 `VIMORE_AUTHOR` / `VIMORE_EMAIL`
+环境变量非交互式提供），写进安装后的配置顶部；已有的 `~/.vimrc`
+会先备份，安装完自动跑一次启动检查。
+
+**最小安装：只拷一个文件，核心功能全部可用。**
+
+```bash
+cp Vimore.vimrc ~/.vimrc
+```
+
+调色板、菜单、F 键、终端、格式化/检查、Git、文件头都写在这一个文件里，
+不需要 `colors/` 目录。只有 `:VimoreTutor` 和 `:VimMaze` 会友好提示
+「随附文件不存在」。
+
+**完整安装：把整个仓库当作配置目录，额外拿到教程和小游戏。**
+
+```bash
+git clone https://github.com/BiaoZyx/Vimore.git ~/.vim/vimore
+ln -s ~/.vim/vimore/Vimore.vimrc ~/.vimrc
+```
+
+教程和 `VimMaze.vim` 都相对本文件定位；软链接也能保证这一点。
 
 ---
 
@@ -48,10 +83,10 @@ Vimore 面向的是折腾意愿中等的 Vim 用户：想用 Vim，但不想为�
 - `colorcolumn=120` 边界线
 
 ### 编辑
-- 智能括号 / 引号补全：`(` `[` `"` `<` `{` 自动配对
+- 智能括号 / 引号补全：`(` `[` `"` 自动配对，`<` 只在 HTML/XML 里配对，`{` 除 C/C++/CSS 外配对
 - 智能退格：成对删除 `()` `[]` `{}` `""` `''`
 - 括号操作：`<Leader>b`
-- 单按 `<` / `>` 缩进当前行，可视模式缩进选区并保持选中
+- `<` / `>` 保持 Vim 默认（单按缩进当前行），可视模式缩进选区并保持选中
 - 快速注释：`<Leader>/`，支持 Python / C / HTML / CSS / Lua 等
 
 ### 搜索
@@ -70,14 +105,14 @@ Vimore 面向的是折腾意愿中等的 Vim 用户：想用 Vim，但不想为�
 ### 运行 / 格式化 / 检查
 
 - `<F5>` 运行当前文件
-- `<F6>` 调试当前文件
-- `<F8>` 代码检查
+- `<F6>` 在终端里调试当前文件（pdb / gdb / dlv）
+- `<F8>` 异步代码检查，问题放进 quickfix
 - `<F9>` 基础格式化（`gg=G`）
 - `<F10>` 自动格式化（优先用 black / gofmt / prettier / clang-format）
 
 ### Leader 提示菜单
 
-按 `<Space>` 单独停住，弹出 which-key 风格的提示菜单：
+按 `<Space>` 停住约 300ms，弹出 which-key 风格的提示菜单：
 
 - 顶层显示所有可用键，子菜单用 `<名字>` 标出
 - 进入子菜单后，第一行显示 `Leader c - 维护`
@@ -86,14 +121,48 @@ Vimore 面向的是折腾意愿中等的 Vim 用户：想用 Vim，但不想为�
 
 ### 文件头自动生成
 
-新建 `.py` / `.go` / `.sh` / `.c` / `.cpp` / `.java` / `.js` 时，
-自动插入作者、邮箱、日期、描述等文件头。
+新建 `.py` / `.go` / `.sh` / `.bash` / `.c` / `.cc` / `.cpp` / `.h` /
+`.hpp` / `.java` / `.js` / `.ts` / `.rs` / `.lua` 时自动插入文件头。
+Go 的 package 按所在目录推导，Java 的类名按文件名推导。
 
 作者和邮箱在 `.vimrc` 顶部配置：
 
 ```vim
-let author = "Change it in ~/.vimrc"
-let email  = "Change it in ~/.vimrc"
+let g:author = "Change it in ~/.vimrc"
+let g:email  = "Change it in ~/.vimrc"
+```
+
+
+## 配色与主题
+
+调色板与 NeoVimore 同步（深海墨色 + 哑光多巴胺语义色），全部写在
+`Vimore.vimrc` 的第 3 节。这里不加载任何真实 `colorscheme`，只登记
+`g:colors_name = 'vimore'` 作为傀儡名——真实主题会重建高亮组，把光标行
+变成下划线。可以这样确认：
+
+```vim
+:echo g:colors_name
+:highlight CursorLine   " 应该是 bg=#1a1a22，没有 underline
+```
+
+Vim 版**不需要** `colors/` 目录，单文件就是完全体。
+
+终端不支持真彩色时用最接近的 256 色；`COLORTERM=truecolor` 时自动
+开启 `termguicolors` 并使用 hex 色值。
+
+## 命令与可选开关
+
+- `:VimoreMenu` — 直接用命令打开 Leader 菜单
+- `:VimoreTutor` — 打开 28 章的 Vimore 交互式教程（`tutor/vim.tutor.txt` 是 23 章的原版 Vim 教程）
+- `:VimMaze` — 打开仓库根目录的迷宫小游戏（按 `?` 看帮助，`q` 退出）
+- `:checkhealth` 之外的健康检查：`vim --clean -Nu Vimore.vimrc -c 'messages' -c 'qa!'`
+
+在 `source` 本配置之前（或直接改文件顶部）可以设置：
+
+```vim
+let g:vimore_autochdir = 0        " 1 = 进文件时自动 cd 到文件目录（默认关）
+let g:vimore_strip_whitespace = 1 " 0 = 保存时不清理行尾空格
+let g:vimore_menu_timeout = 3000  " 菜单无操作后自动关闭的毫秒数
 ```
 
 ---
@@ -157,36 +226,36 @@ Vimore 的插件加载逻辑放在 `~/.vim/plugin/plugins.vim`，内容如下。
 " ------------------------------------------------------------
 " LSP（yegappan/lsp，需要 Vim 9.0+）
 " ------------------------------------------------------------
-if has('vim9script')
-    " 从 ~/.vim/pack/lsp/opt/ 加载
+if has('vim9script') && !empty(globpath(&packpath, 'pack/*/opt/lsp', 1, 1))
     packadd lsp
+endif
 
-    " 注册语言服务器
-    " path 建议写绝对路径，避免 Vim 从不同 shell 启动时找不到
+" 没装插件时保持静默
+if exists(':LspAddServer') == 2
     call LspAddServer([
-        \ #{
-        \   name: 'clangd',
-        \   filetype: ['c', 'cpp'],
-        \   path: 'clangd',
-        \   args: ['--background-index']
+        \ {
+        \   'name': 'clangd',
+        \   'filetype': ['c', 'cpp'],
+        \   'path': 'clangd',
+        \   'args': ['--background-index']
         \ },
-        \ #{
-        \   name: 'pyright',
-        \   filetype: ['python'],
-        \   path: '/home/YOUR_NAME/.npm-global/bin/pyright-langserver',
-        \   args: ['--stdio']
+        \ {
+        \   'name': 'pyright',
+        \   'filetype': ['python'],
+        \   'path': '/home/YOUR_NAME/.npm-global/bin/pyright-langserver',
+        \   'args': ['--stdio']
         \ },
-        \ #{
-        \   name: 'bash-language-server',
-        \   filetype: ['sh', 'bash'],
-        \   path: '/home/YOUR_NAME/.npm-global/bin/bash-language-server',
-        \   args: ['start']
+        \ {
+        \   'name': 'bash-language-server',
+        \   'filetype': ['sh', 'bash'],
+        \   'path': '/home/YOUR_NAME/.npm-global/bin/bash-language-server',
+        \   'args': ['start']
         \ }
         \ ])
-
-    " 限制补全弹出菜单高度，避免遮挡代码
-    set pumheight=15
 endif
+
+" 限制补全弹出菜单高度，避免遮挡代码
+set pumheight=15
 ```
 
 **注意**：把 `/home/YOUR_NAME/` 换成你自己的家目录路径。

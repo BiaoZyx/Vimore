@@ -300,8 +300,8 @@ function! s:RenderMaze() abort
   call s:ReapplyHighlights()
 
   " 顶栏和底栏高亮
-  call matchadd('VimMazeHud', '^  VimMaze.*', 2)
-  call matchadd('VimMazeBar', '^  hjkl:.*', 2)
+  call add(s:match_ids, matchadd('VimMazeHud', '^  VimMaze.*', 2))
+  call add(s:match_ids, matchadd('VimMazeBar', '^  hjkl:.*', 2))
 
   redraw
   echo ''
@@ -607,8 +607,8 @@ function! s:ShowWinAnimation() abort
   call setbufvar(g:vm_bufnr, '&modifiable', 0)
 
   call s:ReapplyHighlights()
-  call matchadd('VimMazeHud', '^  VimMaze.*', 2)
-  call matchadd('VimMazeBar', '^  .*通关.*', 2)
+  call add(s:match_ids, matchadd('VimMazeHud', '^  VimMaze.*', 2))
+  call add(s:match_ids, matchadd('VimMazeBar', '^  .*通关.*', 2))
   redraw
 endfunction
 
@@ -715,6 +715,7 @@ function! s:LoadLevel(level_num) abort
     endfor
   endfor
 
+  let g:vm_maze_original = copy(l:raw)
   let g:vm_level = a:level_num
   let g:vm_steps = 0
   let g:vm_frozen = 0
@@ -722,11 +723,6 @@ function! s:LoadLevel(level_num) abort
 
   call s:ClearPathHint(-1)
   call s:RenderMaze()
-endfunction
-
-function! s:RestartLevel() abort
-  call s:ClearPathHint(-1)
-  call s:StartEndless()
 endfunction
 
 function! s:StartEndless() abort
@@ -1006,7 +1002,7 @@ function! VimMaze#Start() abort
   call s:SetupHighlights()
   call s:CreateGameBuffer()
   call s:SetupKeymaps()
-  call s:StartEndless()
+  call s:LoadLevel(1)
 endfunction
 
 command! VimMaze call VimMaze#Start()

@@ -1,0 +1,15 @@
+name: smoke
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  vim:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Vim
+        run: sudo apt-get update && sudo apt-get install -y vim
+      - name: Run smoke test
+        run: bash tests/run.sh

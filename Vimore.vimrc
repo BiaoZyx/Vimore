@@ -2,7 +2,7 @@
 " Vimore
 " 作者: BiaoZyx
 " 邮箱: BiaoZyx@outlook.com
-" 版本: 3.26
+" 版本: 3.27
 " ============================================================
 "  _   ___
 " | | / (_)_ _  ___  _______
@@ -13,30 +13,43 @@
 " 备注: 普通vim可能剪切板支持不好，建议安装gvim以使用vim
 " ============================================================
 " 记得更改这个，将用于文件头生成
-let author = "Change it in ~/.vimrc"
-let email  = "Change it in ~/.vimrc"
+let g:author = get(g:, 'author', 'Change it in ~/.vimrc')
+let g:email  = get(g:, 'email',  'Change it in ~/.vimrc')
+
+" 可选开关（在 source 本文件之前设置，或直接改这里的默认值）
+" 打开后，进入文件时自动把窗口工作目录切到文件所在目录
+let g:vimore_autochdir = get(g:, 'vimore_autochdir', 0)
+" 设为 0 可关闭保存时清理行尾空格
+let g:vimore_strip_whitespace = get(g:, 'vimore_strip_whitespace', 1)
+" Leader 菜单无操作多少毫秒后自动关闭
+let g:vimore_menu_timeout = get(g:, 'vimore_menu_timeout', 3000)
 
 " ============================================================
 " 1. 基础设置
 " ============================================================
 set nocompatible              " 不使用 vi 兼容模式
+
+" 随附文件（教程、VimMaze）都相对本文件定位；单文件安装时不存在也不影响
+let s:root = fnamemodify(resolve(expand('<sfile>:p')), ':h')
+
 syntax on
 syntax enable
 set background=dark
 
+" 支持真彩色的终端才打开 termguicolors，否则 256 色配色反而会失真
+if has('termguicolors') && !has('gui_running') && $COLORTERM =~? 'truecolor\|24bit'
+    set termguicolors
+endif
+
 let mapleader = " "           " Leader 键设为空格
 set clipboard=                " 不自动同步系统剪切板，用 Ctrl+C/V 手动控制
 
-" 颜色主题
-try
-    colorscheme slate
-catch
-    colorscheme default
-endtry
+" 颜色主题：只登记名字，不调用任何真实 colorscheme。
+" 真实主题会重建高亮组，把 CursorLine 变成下划线；颜色全部在本文件定义。
+let g:colors_name = 'vimore'
 
 " 启动信息精简：a=缩写, o=覆盖写入, O=覆盖读取, t=启动提示, T=标签页信息
-" set shortmess=aoOtT
-set shortmess=tT
+set shortmess=aoOtT
 
 filetype on
 filetype indent on
@@ -58,11 +71,11 @@ set ttyfast                   " 快速终端连接
 "set lazyredraw                " 延迟屏幕更新（提高性能）
 
 " 进入插入模式时使用绝对行号
-autocmd InsertEnter * set norelativenumber
-autocmd InsertEnter * set number
-
-" 退出插入模式时使用相对行号
-autocmd InsertLeave * set relativenumber
+augroup VimoreNumber
+    autocmd!
+    autocmd InsertEnter * setlocal norelativenumber
+    autocmd InsertLeave * setlocal relativenumber
+augroup END
 
 " 限制语法同步范围 (避免 Vim 每次重绘都从头解析整个文件)
 syntax sync minlines=200
@@ -74,70 +87,190 @@ set pumheight=15
 " ============================================================
 " 3. 状态栏
 " ============================================================
-" ---------- 高亮颜色定义（终端 + GUI 统一设置） ----------
-if has('gui_running')
-    " ---- GUI 颜色 ----
-    highlight StatusLine   guifg=#ffffff guibg=#585858 gui=bold
-    highlight StatusLineNC guifg=#aaaaaa guibg=#303030
-    highlight StatusLineTerm   guifg=#ffffff guibg=#585858 gui=bold
-    highlight StatusLineTermNC guifg=#aaaaaa guibg=#303030
-    highlight User1        guifg=#ffd700 guibg=#585858 gui=bold
-    highlight User2        guifg=#87d787 guibg=#585858 gui=bold
-    highlight User3        guifg=#5fd7ff guibg=#585858 gui=bold
-    highlight User4        guifg=#d7afff guibg=#585858 gui=bold
-    highlight User5        guifg=#ffaf5f guibg=#585858 gui=bold
-    " 模式指示器颜色（GUI 版）
-    highlight ModeNormal   guifg=#ffffff guibg=#585858 gui=bold
-    highlight ModeInsert   guifg=#5fafff guibg=#585858 gui=bold
-    highlight ModeVisual   guifg=#87d787 guibg=#585858 gui=bold
-    highlight ModeVLine    guifg=#5faf5f guibg=#585858 gui=bold
-    highlight ModeVBlock   guifg=#5fd7ff guibg=#585858 gui=bold
-    highlight ModeReplace  guifg=#d787ff guibg=#585858 gui=bold
-    highlight ModeCmdline  guifg=#ff5f5f guibg=#585858 gui=bold
-    highlight ModeTerminal guifg=#ffd700 guibg=#585858 gui=bold
-else
-    " ---- 终端颜色（256 色优先） ----
-    if &t_Co >= 256
-        highlight StatusLine   ctermfg=white ctermbg=238 cterm=bold
-        highlight StatusLineNC ctermfg=gray  ctermbg=236
-        highlight StatusLineTerm   ctermfg=white ctermbg=238 cterm=bold
-        highlight StatusLineTermNC ctermfg=gray  ctermbg=236
-        highlight User1        ctermfg=220   ctermbg=238 cterm=bold
-        highlight User2        ctermfg=114   ctermbg=238 cterm=bold
-        highlight User3        ctermfg=81    ctermbg=238 cterm=bold
-        highlight User4        ctermfg=176   ctermbg=238 cterm=bold
-        highlight User5        ctermfg=215   ctermbg=238 cterm=bold
-        " 模式指示器颜色（256 色终端）
-        highlight ModeNormal   ctermfg=white ctermbg=238 cterm=bold
-        highlight ModeInsert   ctermfg=blue  ctermbg=238 cterm=bold
-        highlight ModeVisual   ctermfg=green ctermbg=238 cterm=bold
-        highlight ModeVLine    ctermfg=darkgreen ctermbg=238 cterm=bold
-        highlight ModeVBlock   ctermfg=cyan  ctermbg=238 cterm=bold
-        highlight ModeReplace  ctermfg=magenta ctermbg=238 cterm=bold
-        highlight ModeCmdline  ctermfg=red   ctermbg=238 cterm=bold
-        highlight ModeTerminal ctermfg=yellow ctermbg=238 cterm=bold
-    else
-        " ---- 低色彩终端（8/16 色） ----
-        highlight StatusLine   ctermfg=white ctermbg=darkblue cterm=bold
-        highlight StatusLineNC ctermfg=gray  ctermbg=darkgray
-        highlight StatusLineTerm   ctermfg=white ctermbg=darkblue cterm=bold
-        highlight StatusLineTermNC ctermfg=gray  ctermbg=darkgray
-        highlight User1        ctermfg=yellow ctermbg=darkblue cterm=bold
-        highlight User2        ctermfg=green  ctermbg=darkblue cterm=bold
-        highlight User3        ctermfg=cyan   ctermbg=darkblue cterm=bold
-        highlight User4        ctermfg=magenta ctermbg=darkblue cterm=bold
-        highlight User5        ctermfg=lightred ctermbg=darkblue cterm=bold
-        " 模式指示器颜色（低色彩终端）
-        highlight ModeNormal   ctermfg=white  ctermbg=darkblue cterm=bold
-        highlight ModeInsert   ctermfg=blue   ctermbg=darkblue cterm=bold
-        highlight ModeVisual   ctermfg=green  ctermbg=darkblue cterm=bold
-        highlight ModeVLine    ctermfg=darkgreen ctermbg=darkblue cterm=bold
-        highlight ModeVBlock   ctermfg=cyan   ctermbg=darkblue cterm=bold
-        highlight ModeReplace  ctermfg=magenta ctermbg=darkblue cterm=bold
-        highlight ModeCmdline  ctermfg=red    ctermbg=darkblue cterm=bold
-        highlight ModeTerminal ctermfg=yellow ctermbg=darkblue cterm=bold
-    endif
-endif
+" ---------- 与 NeoVimore 同步的深海墨色调色板 ----------
+" 真正的颜色全部在这里定义；只登记 g:colors_name，不加载真实主题，
+" 避免它覆盖 CursorLine 等自定义高亮。单文件安装不需要任何外部文件。
+let s:pal = {
+            \ 'bg0': ['#121217', 233],
+            \ 'bg1': ['#1a1a22', 234],
+            \ 'bg2': ['#22222c', 235],
+            \ 'bg3': ['#2c2c38', 236],
+            \ 'bg4': ['#3e3e4c', 238],
+            \ 'fg0': ['#d4d4dc', 188],
+            \ 'fg1': ['#a0a0b0', 248],
+            \ 'fg2': ['#6c6c7e', 243],
+            \ 'fg3': ['#454552', 239],
+            \ 'punct': ['#5b5b6d', 241],
+            \ 'red': ['#e5748a', 174],
+            \ 'orange': ['#e8a77d', 180],
+            \ 'yellow': ['#d6bc84', 180],
+            \ 'green': ['#82c79a', 114],
+            \ 'cyan': ['#82c4d4', 116],
+            \ 'blue': ['#7fa9de', 110],
+            \ 'purple': ['#b39fe0', 146]
+            \ }
+
+function! s:Hl(group, fg, bg, style) abort
+    let fg = a:fg ==# '' ? 'NONE' : s:pal[a:fg][0]
+    let bg = a:bg ==# '' ? 'NONE' : s:pal[a:bg][0]
+    let cfg = a:fg ==# '' ? 'NONE' : s:pal[a:fg][1]
+    let cbg = a:bg ==# '' ? 'NONE' : s:pal[a:bg][1]
+    execute 'silent! highlight ' . a:group
+          \ . ' term=NONE guifg=' . fg . ' guibg=' . bg . ' gui=' . a:style
+          \ . ' ctermfg=' . cfg . ' ctermbg=' . cbg . ' cterm=' . a:style
+endfunction
+
+call s:Hl('Normal', 'fg0', 'bg0', 'NONE')
+call s:Hl('NormalNC', 'fg0', 'bg0', 'NONE')
+call s:Hl('NormalFloat', 'fg0', 'bg2', 'NONE')
+call s:Hl('FloatBorder', 'bg4', 'bg2', 'NONE')
+call s:Hl('FloatTitle', 'yellow', 'bg2', 'bold')
+call s:Hl('FloatFooter', 'fg2', 'bg2', 'NONE')
+call s:Hl('LineNr', 'fg3', 'bg0', 'NONE')
+call s:Hl('CursorLineNr', 'yellow', 'bg1', 'bold')
+call s:Hl('CursorLine', '', 'bg1', 'NONE')
+call s:Hl('CursorColumn', '', 'bg1', 'NONE')
+call s:Hl('Cursor', 'bg0', 'fg0', 'NONE')
+call s:Hl('lCursor', 'bg0', 'fg0', 'NONE')
+call s:Hl('TermCursor', 'bg0', 'fg0', 'NONE')
+call s:Hl('SignColumn', 'fg3', 'bg0', 'NONE')
+call s:Hl('CursorLineSign', 'fg3', 'bg1', 'NONE')
+call s:Hl('CursorLineFold', 'fg3', 'bg1', 'NONE')
+call s:Hl('ColorColumn', '', 'bg1', 'NONE')
+call s:Hl('VertSplit', 'bg4', 'bg0', 'NONE')
+call s:Hl('WinSeparator', 'bg4', 'bg0', 'NONE')
+call s:Hl('Visual', '', 'bg3', 'NONE')
+call s:Hl('VisualNOS', '', 'bg2', 'NONE')
+call s:Hl('Search', 'bg0', 'yellow', 'NONE')
+call s:Hl('IncSearch', 'bg0', 'yellow', 'bold')
+call s:Hl('CurSearch', 'bg0', 'yellow', 'bold')
+call s:Hl('MatchParen', 'cyan', '', 'bold,underline')
+call s:Hl('Pmenu', 'fg0', 'bg2', 'NONE')
+call s:Hl('PmenuSel', 'bg0', 'purple', 'bold')
+call s:Hl('PmenuSbar', '', 'bg1', 'NONE')
+call s:Hl('PmenuThumb', '', 'bg4', 'NONE')
+call s:Hl('PmenuKind', 'yellow', 'bg2', 'NONE')
+call s:Hl('PmenuExtra', 'fg2', 'bg2', 'NONE')
+call s:Hl('PmenuMatch', 'blue', 'bg2', 'NONE')
+call s:Hl('PmenuMatchSel', 'bg0', 'purple', 'bold')
+call s:Hl('StatusLine', 'fg0', 'bg3', 'bold')
+call s:Hl('StatusLineNC', 'fg2', 'bg1', 'NONE')
+call s:Hl('StatusLineTerm', 'fg0', 'bg3', 'bold')
+call s:Hl('StatusLineTermNC', 'fg2', 'bg1', 'NONE')
+call s:Hl('MsgArea', 'fg0', 'bg0', 'NONE')
+call s:Hl('MsgSeparator', 'bg4', 'bg0', 'NONE')
+call s:Hl('WildMenu', 'bg0', 'purple', 'bold')
+call s:Hl('QuickFixLine', '', 'bg2', 'bold')
+call s:Hl('TabLine', 'fg2', 'bg1', 'NONE')
+call s:Hl('TabLineSel', 'fg0', 'bg3', 'bold')
+call s:Hl('TabLineFill', '', 'bg1', 'NONE')
+call s:Hl('NonText', 'bg4', '', 'NONE')
+call s:Hl('SpecialKey', 'bg4', '', 'NONE')
+call s:Hl('Whitespace', 'bg4', '', 'NONE')
+call s:Hl('ExtraWhitespace', '', 'bg2', 'NONE')
+call s:Hl('Conceal', 'fg2', '', 'NONE')
+call s:Hl('Directory', 'blue', '', 'bold')
+call s:Hl('Title', 'yellow', '', 'NONE')
+call s:Hl('ErrorMsg', 'red', '', 'bold')
+call s:Hl('WarningMsg', 'yellow', '', 'bold')
+call s:Hl('MoreMsg', 'green', '', 'bold')
+call s:Hl('Question', 'green', '', 'NONE')
+call s:Hl('ModeMsg', 'fg0', '', 'bold')
+call s:Hl('Folded', 'fg2', 'bg1', 'NONE')
+call s:Hl('FoldColumn', 'fg3', 'bg0', 'NONE')
+call s:Hl('DiffAdd', 'green', 'bg1', 'NONE')
+call s:Hl('DiffChange', 'yellow', 'bg1', 'NONE')
+call s:Hl('DiffDelete', 'red', 'bg1', 'NONE')
+call s:Hl('DiffText', 'blue', 'bg2', 'bold')
+call s:Hl('User1', 'yellow', 'bg3', 'bold')
+call s:Hl('User2', 'green', 'bg3', 'bold')
+call s:Hl('User3', 'blue', 'bg3', 'bold')
+call s:Hl('User4', 'purple', 'bg3', 'bold')
+call s:Hl('User5', 'cyan', 'bg3', 'bold')
+call s:Hl('ModeNormal', 'fg0', 'bg3', 'bold')
+call s:Hl('ModeInsert', 'blue', 'bg3', 'bold')
+call s:Hl('ModeVisual', 'green', 'bg3', 'bold')
+call s:Hl('ModeVLine', 'cyan', 'bg3', 'bold')
+call s:Hl('ModeVBlock', 'purple', 'bg3', 'bold')
+call s:Hl('ModeReplace', 'red', 'bg3', 'bold')
+call s:Hl('ModeCmdline', 'yellow', 'bg3', 'bold')
+call s:Hl('ModeTerminal', 'orange', 'bg3', 'bold')
+call s:Hl('Comment', 'fg2', '', 'italic')
+call s:Hl('Constant', 'yellow', '', 'NONE')
+call s:Hl('String', 'green', '', 'NONE')
+call s:Hl('Character', 'green', '', 'NONE')
+call s:Hl('Number', 'yellow', '', 'NONE')
+call s:Hl('Boolean', 'yellow', '', 'NONE')
+call s:Hl('Float', 'yellow', '', 'NONE')
+call s:Hl('Identifier', 'fg0', '', 'NONE')
+call s:Hl('Function', 'blue', '', 'NONE')
+call s:Hl('Statement', 'purple', '', 'bold')
+call s:Hl('Conditional', 'purple', '', 'bold')
+call s:Hl('Repeat', 'purple', '', 'bold')
+call s:Hl('Keyword', 'purple', '', 'bold')
+call s:Hl('Exception', 'purple', '', 'bold')
+call s:Hl('PreProc', 'purple', '', 'NONE')
+call s:Hl('Include', 'purple', '', 'NONE')
+call s:Hl('Define', 'purple', '', 'NONE')
+call s:Hl('Macro', 'orange', '', 'NONE')
+call s:Hl('PreCondit', 'purple', '', 'NONE')
+call s:Hl('Type', 'yellow', '', 'NONE')
+call s:Hl('StorageClass', 'yellow', '', 'NONE')
+call s:Hl('Structure', 'yellow', '', 'NONE')
+call s:Hl('Typedef', 'yellow', '', 'NONE')
+call s:Hl('Special', 'cyan', '', 'NONE')
+call s:Hl('SpecialChar', 'cyan', '', 'NONE')
+call s:Hl('Tag', 'red', '', 'NONE')
+call s:Hl('Delimiter', 'punct', '', 'NONE')
+call s:Hl('SpecialComment', 'cyan', '', 'italic')
+call s:Hl('Debug', 'red', '', 'NONE')
+call s:Hl('Underlined', 'blue', '', 'underline')
+call s:Hl('Ignore', 'fg3', '', 'NONE')
+call s:Hl('Error', 'red', '', 'bold')
+call s:Hl('Todo', 'yellow', '', 'bold,italic')
+call s:Hl('DiagnosticError', 'red', '', 'NONE')
+call s:Hl('DiagnosticWarn', 'yellow', '', 'NONE')
+call s:Hl('DiagnosticInfo', 'blue', '', 'NONE')
+call s:Hl('DiagnosticHint', 'cyan', '', 'NONE')
+call s:Hl('DiagnosticVirtualTextError', 'red', 'bg1', 'NONE')
+call s:Hl('DiagnosticVirtualTextWarn', 'yellow', 'bg1', 'NONE')
+call s:Hl('DiagnosticVirtualTextInfo', 'blue', 'bg1', 'NONE')
+call s:Hl('DiagnosticVirtualTextHint', 'cyan', 'bg1', 'NONE')
+call s:Hl('DiagnosticSignError', 'red', '', 'NONE')
+call s:Hl('DiagnosticSignWarn', 'yellow', '', 'NONE')
+call s:Hl('DiagnosticSignInfo', 'blue', '', 'NONE')
+call s:Hl('DiagnosticSignHint', 'cyan', '', 'NONE')
+call s:Hl('LspReferenceText', '', 'bg2', 'NONE')
+call s:Hl('LspReferenceRead', '', 'bg2', 'NONE')
+call s:Hl('LspReferenceWrite', '', 'bg2', 'underline')
+call s:Hl('LspSignatureActiveParameter', 'orange', '', 'bold')
+call s:Hl('GitSignsAdd', 'green', '', 'NONE')
+call s:Hl('GitSignsChange', 'yellow', '', 'NONE')
+call s:Hl('GitSignsDelete', 'red', '', 'NONE')
+
+" undercurl 需要单独指定 sp 颜色
+silent! highlight DiagnosticUnderlineError gui=undercurl guisp=#e5748a cterm=underline
+silent! highlight DiagnosticUnderlineWarn gui=undercurl guisp=#d6bc84 cterm=underline
+silent! highlight DiagnosticUnderlineInfo gui=undercurl guisp=#7fa9de cterm=underline
+silent! highlight DiagnosticUnderlineHint gui=undercurl guisp=#82c4d4 cterm=underline
+
+" 内置终端 16 色跟随主题
+let g:terminal_color_0 = '#3e3e4c'
+let g:terminal_color_1 = '#e5748a'
+let g:terminal_color_2 = '#82c79a'
+let g:terminal_color_3 = '#d6bc84'
+let g:terminal_color_4 = '#7fa9de'
+let g:terminal_color_5 = '#b39fe0'
+let g:terminal_color_6 = '#82c4d4'
+let g:terminal_color_7 = '#d4d4dc'
+let g:terminal_color_8 = '#454552'
+let g:terminal_color_9 = '#e5748a'
+let g:terminal_color_10 = '#82c79a'
+let g:terminal_color_11 = '#d6bc84'
+let g:terminal_color_12 = '#7fa9de'
+let g:terminal_color_13 = '#b39fe0'
+let g:terminal_color_14 = '#82c4d4'
+let g:terminal_color_15 = '#ffffff'
 
 " ---------- 模式指示器函数（根据 mode() 返回文字） ----------
 function! StatuslineMode()
@@ -204,9 +337,10 @@ if !isdirectory(expand('~/.vim/swapdir'))
     call mkdir(expand('~/.vim/swapdir'), 'p')
 endif
 
-set undodir=~/.vim/undodir
-set backupdir=~/.vim/backupdir
-set directory=~/.vim/swapdir
+" 结尾的 // 让不同目录下的同名文件不会互相覆盖
+set undodir=~/.vim/undodir//
+set backupdir=~/.vim/backupdir//
+set directory=~/.vim/swapdir//
 
 " ============================================================
 " 5. 缩进与格式
@@ -221,7 +355,6 @@ set cindent
 set shiftround
 set infercase
 set formatoptions+=mB
-set lbr
 set textwidth=0                " 禁止自动换行
 set nowrap
 set nolinebreak
@@ -231,29 +364,32 @@ set showbreak=
 " 其他格式：不折行、显示 ↪
 let s:text_fts = ['markdown', 'text', 'org', 'gitcommit', 'rst', 'asciidoc', 'tex']
 
-function! s:SetWrapOptions(...)
-  if index(s:text_fts, &filetype) >= 0
-    setlocal wrap linebreak showbreak=
-    setlocal colorcolumn= breakindent
-  else
-    setlocal nowrap showbreak=↪
-  endif
+function! s:SetWrapOptions() abort
+    " F7 手动切过 wrap 后，不再被文件类型规则覆盖
+    if get(b:, 'vimore_wrap_override', 0)
+        return
+    endif
+    if index(s:text_fts, &filetype) >= 0
+        setlocal wrap linebreak breakindent showbreak=
+        setlocal colorcolumn=
+    else
+        setlocal nowrap nolinebreak nobreakindent showbreak=↪
+    endif
 endfunction
 
-augroup SoftWrapForText
-  autocmd!
-  autocmd FileType,BufEnter,WinEnter * call timer_start(0, function('s:SetWrapOptions'))
+augroup VimoreWrap
+    autocmd!
+    autocmd FileType,BufEnter,WinEnter * call s:SetWrapOptions()
 augroup END
 
 " 各文件类型自定义缩进
-autocmd FileType python,sh setlocal tabstop=4 shiftwidth=4 softtabstop=4 expandtab
-autocmd FileType go setlocal tabstop=4 shiftwidth=4 softtabstop=4 noexpandtab
-autocmd FileType javascript,typescript,html,css,json,yaml,markdown setlocal tabstop=2 shiftwidth=2 softtabstop=2 expandtab
-autocmd FileType c,cpp,java,rust setlocal tabstop=4 shiftwidth=4 softtabstop=4 expandtab
-
-" 普通模式：单按 < / > 缩进当前行
-nnoremap <silent> < :<C-u>silent! normal! <<<CR>
-nnoremap <silent> > :<C-u>silent! normal! >><CR>
+augroup VimoreIndent
+    autocmd!
+    autocmd FileType python,sh setlocal tabstop=4 shiftwidth=4 softtabstop=4 expandtab
+    autocmd FileType go setlocal tabstop=4 shiftwidth=4 softtabstop=4 noexpandtab
+    autocmd FileType javascript,typescript,html,css,json,yaml,markdown setlocal tabstop=2 shiftwidth=2 softtabstop=2 expandtab
+    autocmd FileType c,cpp,java,rust setlocal tabstop=4 shiftwidth=4 softtabstop=4 expandtab
+augroup END
 
 " ============================================================
 " 6. 搜索与替换
@@ -282,28 +418,54 @@ set mousemodel=popup
 set ttymouse=sgr
 set keymodel=startsel,stopsel
 
-" 使用 j, k 默认切换屏幕行 (可视模式不生效)
-nnoremap <expr> j v:count ? 'j' : 'gj'
-nnoremap <expr> k v:count ? 'k' : 'gk'
-
 " 插入模式下设置为闪烁竖线 (solid vertical bar)
 let &t_SI = "\<Esc>[5 q"
 " 正常模式下设置为闪烁方块 (solid block)
 let &t_EI = "\<Esc>[1 q"
-" 进入选择模式：稳定方块
-let &t_SS = "\<Esc>[2 q"
-" 退出选择模式：恢复普通模式方块
-let &t_SE = "\<Esc>[1 q"
-" 进入可视模式：稳定方块
-autocmd ModeChanged *:[vV\x16]* silent !echo -ne "\e[2 q"
-" 退出可视模式：恢复普通模式方块
-autocmd ModeChanged [vV\x16]*:* silent !echo -ne "\e[1 q"
+" t_vi / t_ve 是 terminfo 的「光标可见/不可见」，不是可视模式钩子；
+" t_SS / t_SE 在 Vim 里也不存在。可视模式的光标形状只能用 ModeChanged 切。
+let s:vis_char = nr2char(22)
+execute 'augroup VimoreCursor'
+execute 'autocmd!'
+execute 'autocmd ModeChanged *:[' . s:vis_char . 'vV]* silent !echo -ne "\e[2 q"'
+execute 'autocmd ModeChanged [' . s:vis_char . 'vV]*:* silent !echo -ne "\e[1 q"'
+execute 'augroup END'
 set timeoutlen=300   " 缩短普通映射超时（单位毫秒）
 set ttimeoutlen=50   " 缩短按键码（如功能键、方向键）超时
 
-function! SaveAndClear()
-    write
-    call timer_start(2000, {-> execute('echo ""', '')})
+function! SaveAndClear() abort
+    if &buftype != '' || expand('%') == ''
+        echo 'vimore: 当前 buffer 没有文件名，无法保存'
+        return
+    endif
+    try
+        silent write
+    catch
+        echo 'vimore: 保存失败: ' . v:exception
+        return
+    endtry
+    call timer_start(2000, {-> execute('echo ""')})
+endfunction
+
+" 不阻塞地把命令放到临时终端里执行
+function! s:RunInTerminal(cmd, dir) abort
+    let l:win = winnr()
+    botright new
+    try
+        let l:buf = term_start(['sh', '-c', a:cmd], {
+                    \ 'cwd': a:dir,
+                    \ 'curwin': 1,
+                    \ 'term_finish': 'close',
+                    \ })
+    catch
+        close
+        echo 'vimore: 无法启动终端: ' . v:exception
+        return -1
+    endtry
+    execute 'resize ' . max([5, &lines / 3])
+    setlocal nonumber norelativenumber signcolumn=no
+    startinsert
+    return l:buf
 endfunction
 
 " ============================================================
@@ -312,7 +474,7 @@ endfunction
 " 补全左括号光标后无字符或紧挨右括号时智能处理）
 inoremap <silent> ( <C-r>=SmartPair('(', ')')<CR>
 inoremap <silent> [ <C-r>=SmartPair('[', ']')<CR>
-inoremap <silent> { <C-r>=SmartPair('{', '}')<CR>
+inoremap <silent> { <C-r>=SmartCondition('{')<CR>
 
 " 特殊映射
 function! SmartCondition(char)
@@ -433,23 +595,10 @@ function! SmartClose(char)
     return a:char
 endfunction
 
-function! SmartCloseQuote(quote)
-    silent!
-    let line = getline('.')
-    let col = col('.') - 1
-
-    if col < len(line) && line[col] == a:quote
-        return "\<Right>"
-    endif
-
-    return a:quote
-endfunction
-
 " 智能退格：成对删除括号/引号
 inoremap <silent> <BS> <C-r>=SmartBackspace()<CR>
 
 function! SmartBackspace()
-    silent!
     let line = getline('.')
     let col = col('.') - 1
 
@@ -506,7 +655,8 @@ endfunction
 
 function! WlClipboardPaste() abort
     if executable('wl-paste')
-        let l:text = system('wl-paste -n')
+        " 不用 -n：保留结尾换行，setreg() 才会识别为行wise 选区
+        let l:text = system('wl-paste')
         " 只有真的读到内容才覆盖，避免把本来可用的 "+ 寄存器清空
         if v:shell_error == 0 && !empty(l:text)
             call setreg('+', l:text)
@@ -537,8 +687,10 @@ nnoremap <silent> "+P :<C-u>call WlClipboardPaste()<CR>"+P
 vnoremap <silent> "+p :<C-u>call WlClipboardPaste()<CR>gv"+p
 vnoremap <silent> "+P :<C-u>call WlClipboardPaste()<CR>gv"+P
 
-" 粘贴模式开关
+" 粘贴模式开关：插入模式靠 pastetoggle（paste 打开时映射不生效），
+" 普通模式补一个映射，两边都能按 F2
 set pastetoggle=<F2>
+nnoremap <silent> <F2> :set paste! <Bar> echo 'paste = ' . &paste<CR>
 
 " ============================================================
 " 10. 快速注释
@@ -683,36 +835,46 @@ tnoremap <C-S-v> <C-\><C-n>"+pi
 function! OpenTerminal(direction)
     if a:direction == 'horizontal'
         botright terminal
-        execute "resize " . (&lines / 3)
+        execute 'resize ' . max([5, &lines / 3])
     else
         vertical botright terminal
-        execute "vertical resize " . (&columns / 3)
+        execute 'vertical resize ' . max([10, &columns / 3])
     endif
     startinsert
 endfunction
 
-function! GetRunCommand()
+function! GetRunCommand() abort
+    if expand('%') == ''
+        return ''
+    endif
     let ft = &filetype
+    let file = shellescape(expand('%:p'))
+    let out = shellescape(expand('%:p:r'))
     if ft == 'python'
-        return 'python3 ' . expand('%')
+        return 'python3 ' . file
     elseif ft == 'go'
-        return 'go run ' . expand('%')
+        return 'go run ' . file
     elseif ft == 'c'
-        return 'gcc ' . expand('%') . ' -o ' . expand('%:r') . ' && ./' . expand('%:r')
+        return 'gcc ' . file . ' -o ' . out . ' && ' . out
     elseif ft == 'cpp'
-        return 'g++ ' . expand('%') . ' -o ' . expand('%:r') . ' && ./' . expand('%:r')
+        return 'g++ ' . file . ' -o ' . out . ' && ' . out
     elseif ft == 'javascript'
-        return 'node ' . expand('%')
+        return 'node ' . file
     elseif ft == 'sh' || ft == 'bash'
-        return 'bash ' . expand('%')
+        return 'bash ' . file
     elseif ft == 'lua'
-        return 'lua ' . expand('%')
+        return 'lua ' . file
     elseif ft == 'rust'
-        return 'cargo run'
+        return 'cd ' . shellescape(expand('%:p:h')) . ' && cargo run'
     else
         return ''
     endif
 endfunction
+
+augroup VimoreTerminal
+    autocmd!
+    autocmd TerminalOpen * setlocal nonumber norelativenumber signcolumn=no
+augroup END
 
 " 找到最新的终端 buffer
 function! s:FindLatestTerminal()
@@ -730,57 +892,54 @@ function! s:FindLatestTerminal()
 endfunction
 
 " 在最新终端里运行当前文件
-function! RunInLatestTerminal()
+function! RunInLatestTerminal() abort
     let cmd = GetRunCommand()
     if cmd == ''
-        echo "不支持的文件类型: " . &filetype
+        echo 'vimore: 不支持的文件类型: ' . &filetype
         return
     endif
-    silent! write
+    try
+        silent write
+    catch
+        echo 'vimore: 保存失败: ' . v:exception
+        return
+    endtry
 
     let term_buf = s:FindLatestTerminal()
 
     if term_buf == -1
-        " 没有终端，新开一个
         botright terminal
-        execute "resize " . (&lines / 3)
+        execute 'resize ' . max([5, &lines / 3])
+        let term_buf = bufnr('%')
     else
-        " 有终端，切到它的窗口
         let win = bufwinnr(term_buf)
         if win == -1
-            " buffer 存在但窗口关了，重新打开
-            execute "botright split | buffer " . term_buf
-            execute "resize " . (&lines / 3)
-            let win = bufwinnr(term_buf)
+            execute 'botright sbuffer ' . term_buf
+            execute 'resize ' . max([5, &lines / 3])
+        else
+            execute win . 'wincmd w'
         endif
-        execute win . "wincmd w"
     endif
 
-    " 进入终端模式并发送命令
+    call term_sendkeys(term_buf, cmd . "\r")
     startinsert
-    call feedkeys(cmd . "\<CR>", 'n')
 endfunction
 
-function! ToggleTerminal()
-    let term_buf = -1
-    for buf in range(1, bufnr('$'))
-        if getbufvar(buf, '&buftype') == 'terminal'
-            let term_buf = buf
-            break
-        endif
-    endfor
+function! ToggleTerminal() abort
+    let term_buf = s:FindLatestTerminal()
 
     if term_buf == -1
         botright terminal
-        execute "resize " . (&lines / 3)
+        execute 'resize ' . max([5, &lines / 3])
         startinsert
     else
-        if bufwinnr(term_buf) == -1
-            execute "botright split | buffer " . term_buf
-            execute "resize " . (&lines / 3)
+        let win = bufwinnr(term_buf)
+        if win == -1
+            execute 'botright sbuffer ' . term_buf
+            execute 'resize ' . max([5, &lines / 3])
             startinsert
         else
-            execute bufwinnr(term_buf) . "wincmd c"
+            execute win . 'wincmd c'
         endif
     endif
 endfunction
@@ -821,12 +980,19 @@ function! SmartEnter()
     return "\<CR>"
 endfunction
 
-function! SplitPair()
+function! SplitPair() abort
     let lnum = line('.')
     let line = getline(lnum)
     let col = col('.') - 1
+    if col <= 0
+        return
+    endif
+
     let indent = matchstr(line, '^\s*')
-    let inner = indent . repeat(' ', &shiftwidth)
+    let sw = max([&shiftwidth, 1])
+    " Go 等 noexpandtab 文件里内层缩进应该用 Tab，不能混进空格
+    let step = &expandtab ? repeat(' ', sw) : "\t"
+    let inner = indent . step
 
     let line1 = line[:col-1]
     let line2 = inner
@@ -838,8 +1004,6 @@ function! SplitPair()
 
     call cursor(lnum + 1, len(line2) + 1)
 endfunction
-
-filetype plugin on
 
 " 各语言补全函数
 let g:omni_func_map = {
@@ -856,15 +1020,19 @@ let g:omni_func_map = {
             \ 'xml': 'xmlcomplete#CompleteTags'
             \ }
 
-function! SetOmniFunc()
+function! SetOmniFunc() abort
     let ft = &filetype
     if has_key(g:omni_func_map, ft)
-        execute 'set omnifunc=' . g:omni_func_map[ft]
+        execute 'setlocal omnifunc=' . g:omni_func_map[ft]
     else
-        set omnifunc=syntaxcomplete#Complete
+        setlocal omnifunc=syntaxcomplete#Complete
     endif
 endfunction
-autocmd FileType * call SetOmniFunc()
+
+augroup VimoreOmni
+    autocmd!
+    autocmd FileType * call SetOmniFunc()
+augroup END
 
 " ============================================================
 " 13. 代码折叠
@@ -885,43 +1053,46 @@ endfunction
 " ============================================================
 " 14. 行尾空格显示与清理
 " ============================================================
-highlight ExtraWhitespace ctermfg=240 guifg=#666666 ctermbg=NONE guibg=NONE
-match ExtraWhitespace /\s\+$/
 
-" 保存时自动清理行尾空格（Markdown 除外）
-autocmd BufWritePre * call StripTrailingWhitespace()
-
-function! StripTrailingWhitespace()
-    if &filetype == 'markdown'
+function! StripTrailingWhitespace() abort
+    if get(g:, 'vimore_strip_whitespace', 1) == 0
         return
     endif
-    let pos = getpos('.')
-    silent! execute '%s/\s\+$//e'
-    call setpos('.', pos)
+    if &buftype != '' || !&modifiable || &filetype == 'markdown'
+        return
+    endif
+    let view = winsaveview()
+    silent! keeppatterns %s/\s\+$//e
+    call winrestview(view)
 endfunction
 
-function! StripTrailingWhitespaceManual()
-    let pos = getpos('.')
-    silent! execute '%s/\s\+$//e'
-    call setpos('.', pos)
-    echo "已清理行尾空格"
-    call timer_start(2000, {-> execute('echo ""', '')})
+function! StripTrailingWhitespaceManual() abort
+    let view = winsaveview()
+    silent! keeppatterns %s/\s\+$//e
+    call winrestview(view)
+    echo 'vimore: 已清理行尾空格'
+    call timer_start(2000, {-> execute('echo ""')})
 endfunction
+
+augroup VimoreWhitespace
+    autocmd!
+    autocmd BufWinEnter,WinEnter * match ExtraWhitespace /\s\+$/
+    autocmd BufWritePre * call StripTrailingWhitespace()
+augroup END
 
 " ============================================================
 " 15. 边界线
 " ============================================================
 if exists('+colorcolumn')
     set colorcolumn=120
-    highlight! ColorColumn ctermbg=234 guibg=#3a3a3a cterm=NONE gui=NONE
 endif
 
 " ============================================================
 " 16. 普通快捷键（无 leader）
 " ============================================================
 " 保存
-nnoremap <C-s> :call SaveAndClear()<CR>
-inoremap <C-s> <Esc>:call SaveAndClear()<CR>
+nnoremap <silent> <C-s> <Cmd>call SaveAndClear()<CR>
+inoremap <silent> <C-s> <C-o>:call SaveAndClear()<CR>
 
 " 窗口切换
 nnoremap <C-h> <C-w>h
@@ -929,10 +1100,9 @@ nnoremap <C-j> <C-w>j
 nnoremap <C-k> <C-w>k
 nnoremap <C-l> <C-w>l
 
-" 标签页切换
-nnoremap <silent> <A-Left> :tabp<CR>
-nnoremap <silent> <A-Right> :tabn<CR>
-nnoremap <silent> <C-t> :tabnew<CR>
+" 标签页切换（<C-t> 保持 Vim 默认的标签栈跳转）
+nnoremap <silent> <A-Left> <Cmd>tabprevious<CR>
+nnoremap <silent> <A-Right> <Cmd>tabnext<CR>
 
 " 全选复制
 vnoremap <C-x> "+x
@@ -942,164 +1112,391 @@ vnoremap <C-x> "+x
 " ============================================================
 " F1 - 帮助
 " F2 - 粘贴模式总开关
-nnoremap <silent> <F3> :Explore<CR>
+nnoremap <silent> <F3> <Cmd>Explore<CR>
                             " 文件浏览器
-nnoremap <silent> <F4> :Vexplore<CR>
+nnoremap <silent> <F4> <Cmd>Vexplore<CR>
                             " 垂直浏览器
-nnoremap <silent> <F5> :call RunInLatestTerminal()<CR>
+nnoremap <silent> <F5> <Cmd>call RunInLatestTerminal()<CR>
                             " 运行代码
-nnoremap <silent> <F6> :call DebugCode()<CR>
+nnoremap <silent> <F6> <Cmd>call DebugCode()<CR>
                             " 调试代码
-nnoremap <silent> <F7> :set wrap!<CR>:echo "wrap = " . &wrap<CR>
+nnoremap <silent> <F7> <Cmd>call ToggleWrap()<CR>
                             " 切换自动换行
-nnoremap <silent> <F8> :call CheckCode()<CR>
+nnoremap <silent> <F8> <Cmd>call CheckCode()<CR>
                             " 代码检查
 nnoremap <silent> <F9> gg=G
                             " 基础格式化
-nnoremap <silent> <F10> :call FormatCode()<CR>
+nnoremap <silent> <F10> <Cmd>call FormatCode()<CR>
                             " 自动格式化
+
+function! ToggleWrap() abort
+    let b:vimore_wrap_override = 1
+    setlocal wrap!
+    if &l:wrap
+        setlocal linebreak showbreak=↪
+    else
+        setlocal nolinebreak showbreak=
+    endif
+    echo 'wrap = ' . &l:wrap
+endfunction
 
 " ============================================================
 " 18. 运行、调试、格式化、检查函数
 " ============================================================
-func! DebugCode()
-    silent! write
-    let ft = &filetype
-    if ft == 'python'
-        exec "!python3 -m pdb %"
-    elseif ft == 'c' || ft == 'cpp'
-        exec "!g++ % -g -o %< && gdb ./%<"
-    elseif ft == 'go'
-        exec "!dlv debug %"
-    else
-        echo "vimore: 调试不支持的文件类型: " . ft
+" ---------- 公共小工具 ----------
+function! s:SaveFile() abort
+    if &buftype != '' || expand('%') == ''
+        echo 'vimore: 当前 buffer 没有文件名'
+        return 0
     endif
-    "redraw!
-endfunc
+    try
+        silent write
+    catch
+        echo 'vimore: 保存失败: ' . v:exception
+        return 0
+    endtry
+    return 1
+endfunction
 
-func! FormatCode()
-    silent! write
-    let pos = getpos('.')
-    let ft = &filetype
-    let formatted = 0
-    let output = ''
-    let file = shellescape(expand('%'))
+function! s:CollectOutput(output, channel, msg) abort
+    call add(a:output, a:msg)
+endfunction
 
-    " 依次尝试，第一个可执行的用上
-    let candidates = []
-
-    if ft == 'python'
-        call add(candidates, ['black', 'black --skip-string-normalization ' . file])
-        call add(candidates, ['autopep8', 'autopep8 -i --aggressive --max-line-length=120 ' . file])
-        call add(candidates, ['ruff', 'ruff format ' . file])
-    elseif ft == 'go'
-        call add(candidates, ['gofmt', 'gofmt -w ' . file])
-        call add(candidates, ['goimports', 'goimports -w ' . file])
-    elseif ft == 'rust'
-        call add(candidates, ['rustfmt', 'rustfmt ' . file])
-        call add(candidates, ['cargo', 'cargo fmt'])
-    elseif ft == 'lua'
-        call add(candidates, ['stylua', 'stylua ' . file])
-    elseif ft =~? '^javascript\|^typescript'
-        call add(candidates, ['prettier', 'prettier --write ' . file])
-        call add(candidates, ['eslint', 'eslint --fix ' . file])
-    elseif ft =~? '^json'
-        call add(candidates, ['prettier', 'prettier --write ' . file])
-        call add(candidates, ['jq', 'jq . ' . file . ' > ' . file . '.tmp && mv ' . file . '.tmp ' . file])
-        call add(candidates, ['python3', 'python3 -m json.tool ' . file . ' > ' . shellescape(expand('%:r')) . '.tmp && mv ' . shellescape(expand('%:r')) . '.tmp ' . file])
-    elseif ft == 'yaml' || ft == 'yml'
-        call add(candidates, ['prettier', 'prettier --write ' . file])
-        call add(candidates, ['yq', 'yq -i ". style=\"\\"\\"" ' . file])
-    elseif ft == 'markdown'
-        call add(candidates, ['prettier', 'prettier --write ' . file])
-        call add(candidates, ['mdformat', 'mdformat ' . file])
-    elseif ft =~? '^html\|^css\|^scss\|^less'
-        call add(candidates, ['prettier', 'prettier --write ' . file])
-    elseif ft =~? '^c$\|^cpp$\|^cuda$'
-        call add(candidates, ['clang-format', 'clang-format -i ' . file])
-    elseif ft == 'java'
-        call add(candidates, ['google-java-format', 'google-java-format -i ' . file])
-        call add(candidates, ['astyle', 'astyle --style=java --suffix=none ' . file])
-    elseif ft =~? '^sh$\|^bash$'
-        call add(candidates, ['shfmt', 'shfmt -w ' . file])
-    elseif ft == 'toml'
-        call add(candidates, ['taplo', 'taplo format ' . file])
-    elseif ft == 'xml'
-        call add(candidates, ['xmllint', 'xmllint --format ' . file . ' -o ' . file])
-    elseif ft == 'sql'
-        call add(candidates, ['sqlfluff', 'sqlfluff fix ' . file])
-        call add(candidates, ['sqlformat', 'sqlformat -r -k upper -i indent ' . file . ' -o ' . file])
-    elseif ft == 'ruby'
-        call add(candidates, ['rubocop', 'rubocop -a ' . file])
-    elseif ft == 'php'
-        call add(candidates, ['php-cs-fixer', 'php-cs-fixer fix ' . file])
-        call add(candidates, ['pint', 'pint ' . file])
-    elseif ft == 'zig'
-        call add(candidates, ['zig', 'zig fmt ' . file])
-    elseif ft == 'nix'
-        call add(candidates, ['alejandra', 'alejandra ' . file])
-        call add(candidates, ['nixpkgs-fmt', 'nixpkgs-fmt ' . file])
-    elseif ft == 'cmake'
-        call add(candidates, ['cmake-format', 'cmake-format -i ' . file])
-    endif
-
-    " 取第一个可执行的
-    for [exe, cmd] in candidates
-        if executable(exe)
-            let output = system(cmd . ' 2>&1')
-            let formatted = 1
-            break
-        end
-    endfor
-
-    if !formatted
-        execute "normal gg=G"
-    endif
-
-    silent! execute "e!"
-    call setpos('.', pos)
-
-    if empty(output)
-        if formatted
-            echo "格式化完成"
-        else
-            echo "已用 gg=G 基础缩进"
-        endif
-    else
-        echo output
-    endif
-endfunc
-
-func! CheckCode()
-    silent! write
-    let ft = &filetype
-    let output = ''
-
-    if ft == 'python'
-        if executable('pylint')
-            let output = system('pylint ' . shellescape(expand('%')))
-        elseif executable('flake8')
-            let output = system('flake8 ' . shellescape(expand('%')))
-        else
-            echo "vimore: 未找到 Python 代码检查工具"
-            return
-        endif
-    elseif ft == 'javascript'
-        if executable('eslint')
-            let output = system('eslint ' . shellescape(expand('%')))
-        else
-            echo "vimore: 未找到 JavaScript 代码检查工具"
-            return
-        endif
-    else
-        echo "vimore: 代码检查不支持的文件类型: " . ft
+" ---------- 调试 ----------
+func! DebugCode() abort
+    if !s:SaveFile()
         return
     endif
 
-    if empty(output)
-        echo "检查通过，没有发现问题"
+    let ft = &filetype
+    let file = expand('%:p')
+    let dir = expand('%:p:h')
+    let out = expand('%:p:r')
+
+    if ft == 'python'
+        let cmd = 'python3 -m pdb ' . shellescape(file)
+    elseif ft == 'c' || ft == 'cpp'
+        let cc = ft == 'c' ? 'gcc' : 'g++'
+        let cmd = cc . ' ' . shellescape(file) . ' -g -o ' . shellescape(out) . ' && gdb ' . shellescape(out)
+    elseif ft == 'go'
+        " dlv debug 调试当前目录的 package，不接受单个 .go 文件
+        let cmd = 'dlv debug'
     else
-        echo output
+        echo 'vimore: 调试不支持的文件类型: ' . ft
+        return
+    endif
+
+    call s:RunInTerminal(cmd, dir)
+endfunc
+
+" ---------- 格式化 ----------
+function! s:FormatCandidates(ft, file) abort
+    let list = []
+    let tmp = shellescape(expand('%:p') . '.vimore.tmp')
+
+    if a:ft == 'python'
+        if executable('black')
+            call add(list, ['black', 'black --skip-string-normalization ' . a:file])
+        endif
+        if executable('ruff')
+            call add(list, ['ruff', 'ruff format ' . a:file])
+        endif
+        if executable('autopep8')
+            call add(list, ['autopep8', 'autopep8 -i --aggressive --max-line-length=120 ' . a:file])
+        endif
+    elseif a:ft == 'go'
+        if executable('gofmt')
+            call add(list, ['gofmt', 'gofmt -w ' . a:file])
+        endif
+        if executable('goimports')
+            call add(list, ['goimports', 'goimports -w ' . a:file])
+        endif
+    elseif a:ft == 'rust'
+        if executable('rustfmt')
+            call add(list, ['rustfmt', 'rustfmt ' . a:file])
+        endif
+        if executable('cargo')
+            call add(list, ['cargo', 'cargo fmt'])
+        endif
+    elseif a:ft == 'lua'
+        if executable('stylua')
+            call add(list, ['stylua', 'stylua ' . a:file])
+        endif
+    elseif a:ft =~? '^javascript\|^typescript'
+        if executable('prettier')
+            call add(list, ['prettier', 'prettier --write ' . a:file])
+        endif
+        if executable('eslint')
+            call add(list, ['eslint', 'eslint --fix ' . a:file])
+        endif
+    elseif a:ft =~? '^json'
+        if executable('prettier')
+            call add(list, ['prettier', 'prettier --write ' . a:file])
+        endif
+        if executable('jq')
+            call add(list, ['jq', 'jq . ' . a:file . ' > ' . tmp . ' && mv ' . tmp . ' ' . a:file])
+        endif
+        if executable('python3')
+            call add(list, ['python3', 'python3 -m json.tool ' . a:file . ' > ' . tmp . ' && mv ' . tmp . ' ' . a:file])
+        endif
+    elseif a:ft == 'yaml' || a:ft == 'yml'
+        if executable('prettier')
+            call add(list, ['prettier', 'prettier --write ' . a:file])
+        endif
+        if executable('yq')
+            call add(list, ['yq', 'yq -i ''.style = ""'' ' . a:file])
+        endif
+    elseif a:ft == 'markdown'
+        if executable('prettier')
+            call add(list, ['prettier', 'prettier --write ' . a:file])
+        endif
+        if executable('mdformat')
+            call add(list, ['mdformat', 'mdformat ' . a:file])
+        endif
+    elseif a:ft =~? '^html\|^css\|^scss\|^less'
+        if executable('prettier')
+            call add(list, ['prettier', 'prettier --write ' . a:file])
+        endif
+    elseif a:ft =~? '^c$\|^cpp$\|^cuda$'
+        if executable('clang-format')
+            call add(list, ['clang-format', 'clang-format -i ' . a:file])
+        endif
+    elseif a:ft == 'java'
+        if executable('google-java-format')
+            call add(list, ['google-java-format', 'google-java-format -i ' . a:file])
+        endif
+        if executable('astyle')
+            call add(list, ['astyle', 'astyle --style=java --suffix=none ' . a:file])
+        endif
+    elseif a:ft =~? '^sh$\|^bash$'
+        if executable('shfmt')
+            call add(list, ['shfmt', 'shfmt -w ' . a:file])
+        endif
+    elseif a:ft == 'toml'
+        if executable('taplo')
+            call add(list, ['taplo', 'taplo format ' . a:file])
+        endif
+    elseif a:ft == 'xml'
+        if executable('xmllint')
+            call add(list, ['xmllint', 'xmllint --format ' . a:file . ' -o ' . a:file])
+        endif
+    elseif a:ft == 'sql'
+        if executable('sqlfluff')
+            call add(list, ['sqlfluff', 'sqlfluff fix ' . a:file])
+        endif
+        if executable('sqlformat')
+            call add(list, ['sqlformat', 'sqlformat -r -k upper -i indent ' . a:file . ' -o ' . a:file])
+        endif
+    elseif a:ft == 'ruby'
+        if executable('rubocop')
+            call add(list, ['rubocop', 'rubocop -a ' . a:file])
+        endif
+    elseif a:ft == 'php'
+        if executable('php-cs-fixer')
+            call add(list, ['php-cs-fixer', 'php-cs-fixer fix ' . a:file])
+        endif
+        if executable('pint')
+            call add(list, ['pint', 'pint ' . a:file])
+        endif
+    elseif a:ft == 'zig'
+        if executable('zig')
+            call add(list, ['zig', 'zig fmt ' . a:file])
+        endif
+    elseif a:ft == 'nix'
+        if executable('alejandra')
+            call add(list, ['alejandra', 'alejandra ' . a:file])
+        endif
+        if executable('nixpkgs-fmt')
+            call add(list, ['nixpkgs-fmt', 'nixpkgs-fmt ' . a:file])
+        endif
+    elseif a:ft == 'cmake'
+        if executable('cmake-format')
+            call add(list, ['cmake-format', 'cmake-format -i ' . a:file])
+        endif
+    endif
+
+    return list
+endfunction
+
+function! s:FormatDone(bufnr, view, output, job, status) abort
+    if !bufexists(a:bufnr)
+        return
+    endif
+
+    " 外部工具直接改磁盘文件，重新读一次；窗口不在当前标签页时也不打扰用户
+    let winid = bufwinid(a:bufnr)
+    if winid != -1
+        " 强制重读：checktime 依赖 mtime，粗粒度文件系统上会漏掉重写
+        call win_execute(winid, 'if !&modified | silent! edit! | endif')
+        call win_execute(winid, 'call winrestview(' . string(a:view) . ')')
+    endif
+
+    let text = trim(join(a:output, ''))
+    if a:status != 0
+        echo 'vimore: 格式化失败: ' . (empty(text) ? 'exit ' . a:status : text)
+    elseif !empty(text)
+        echo 'vimore: ' . text
+    else
+        echo 'vimore: 格式化完成'
+    endif
+endfunction
+
+func! FormatCode() abort
+    if !s:SaveFile()
+        return
+    endif
+
+    let view = winsaveview()
+    let bufnr = bufnr('%')
+    let file = shellescape(expand('%:p'))
+    let candidates = s:FormatCandidates(&filetype, file)
+    let cmd = ''
+
+    for [exe, c] in candidates
+        if executable(exe)
+            let cmd = c
+            break
+        endif
+    endfor
+
+    if cmd == ''
+        silent! normal! gg=G
+        call winrestview(view)
+        echo 'vimore: 没有找到外部格式化工具，已用 gg=G 做基础缩进'
+        return
+    endif
+
+    let output = []
+    let job = job_start(['sh', '-c', cmd], {
+                \ 'cwd': expand('%:p:h'),
+                \ 'out_cb': function('s:CollectOutput', [output]),
+                \ 'err_cb': function('s:CollectOutput', [output]),
+                \ 'exit_cb': function('s:FormatDone', [bufnr, view, output]),
+                \ })
+    if job_status(job) ==# 'fail'
+        echo 'vimore: 无法启动格式化工具'
+    endif
+endfunc
+
+" ---------- 代码检查 ----------
+function! s:CheckCandidates(ft, file) abort
+    let list = []
+
+    if a:ft == 'python'
+        if executable('ruff')
+            call add(list, ['ruff', 'ruff check ' . a:file])
+        endif
+        if executable('pylint')
+            call add(list, ['pylint', 'pylint ' . a:file])
+        endif
+        if executable('flake8')
+            call add(list, ['flake8', 'flake8 ' . a:file])
+        endif
+    elseif a:ft =~? '^javascript\|^typescript'
+        if executable('eslint')
+            call add(list, ['eslint', 'eslint ' . a:file])
+        endif
+    elseif a:ft == 'go'
+        if executable('go')
+            call add(list, ['go', 'go vet ' . a:file])
+        endif
+    elseif a:ft == 'rust'
+        if executable('cargo')
+            call add(list, ['cargo', 'cargo check'])
+        endif
+    elseif a:ft == 'lua'
+        if executable('luac')
+            call add(list, ['luac', 'luac -p ' . a:file])
+        endif
+    elseif a:ft == 'sh' || a:ft == 'bash'
+        if executable('shellcheck')
+            call add(list, ['shellcheck', 'shellcheck ' . a:file])
+        endif
+    elseif a:ft == 'c' || a:ft == 'cpp'
+        let cc = a:ft == 'c' ? 'gcc' : 'g++'
+        if executable(cc)
+            call add(list, [cc, cc . ' -fsyntax-only ' . a:file])
+        endif
+    elseif a:ft == 'json'
+        if executable('jq')
+            call add(list, ['jq', 'jq empty ' . a:file])
+        endif
+    elseif a:ft == 'yaml' || a:ft == 'yml'
+        if executable('yamllint')
+            call add(list, ['yamllint', 'yamllint ' . a:file])
+        endif
+    elseif a:ft == 'toml'
+        if executable('taplo')
+            call add(list, ['taplo', 'taplo check ' . a:file])
+        endif
+    elseif a:ft == 'markdown'
+        if executable('markdownlint')
+            call add(list, ['markdownlint', 'markdownlint ' . a:file])
+        endif
+    endif
+
+    return list
+endfunction
+
+function! s:CheckDone(output, job, status) abort
+    let text = trim(join(a:output, ''))
+
+    if a:status == 0 && text == ''
+        echo 'vimore: 检查通过，没有发现问题'
+        return
+    endif
+    if text == ''
+        echo 'vimore: 检查失败 (exit ' . a:status . ')'
+        return
+    endif
+
+    let save_efm = &errorformat
+    set errorformat=%f:%l:%c:\ %m,%f:%l:\ %m,%m
+    try
+        execute 'silent cexpr ' . string(text)
+    catch
+        echo 'vimore: 检查输出无法解析: ' . v:exception
+        let &errorformat = save_efm
+        return
+    endtry
+    let &errorformat = save_efm
+
+    if !empty(getqflist())
+        copen
+    endif
+    echo 'vimore: 检查发现问题，已放入 quickfix'
+endfunction
+
+func! CheckCode() abort
+    if !s:SaveFile()
+        return
+    endif
+
+    let file = shellescape(expand('%:p'))
+    let candidates = s:CheckCandidates(&filetype, file)
+    let cmd = ''
+
+    for [exe, c] in candidates
+        if executable(exe)
+            let cmd = c
+            break
+        endif
+    endfor
+
+    if cmd == ''
+        echo 'vimore: 没有找到该文件类型的检查工具: ' . &filetype
+        return
+    endif
+
+    let output = []
+    let job = job_start(['sh', '-c', cmd], {
+                \ 'cwd': expand('%:p:h'),
+                \ 'out_cb': function('s:CollectOutput', [output]),
+                \ 'err_cb': function('s:CollectOutput', [output]),
+                \ 'exit_cb': function('s:CheckDone', [output]),
+                \ })
+    if job_status(job) ==# 'fail'
+        echo 'vimore: 无法启动检查工具'
     endif
 endfunc
 
@@ -1118,117 +1515,152 @@ let g:netrw_sort_sequence='[\/]$,*'
 " ============================================================
 " 20. 文件头自动生成
 " ============================================================
-autocmd BufNewFile *.py,*.go,*.sh,*.c,*.cpp,*.java,*.js,*.ts,*.rs,*.lua call s:SetTitle()
+let s:header_ft = {
+            \ 'py': 'python', 'go': 'go', 'sh': 'sh', 'bash': 'sh',
+            \ 'c': 'c', 'cc': 'cpp', 'cpp': 'cpp', 'h': 'c', 'hpp': 'cpp',
+            \ 'java': 'java', 'js': 'javascript', 'ts': 'typescript',
+            \ 'rs': 'rust', 'lua': 'lua',
+            \ }
 
-function! s:SetTitle()
+function! s:HeaderFT() abort
+    if &filetype != ''
+        return &filetype
+    endif
+    return get(s:header_ft, tolower(expand('%:e')), '')
+endfunction
+
+function! s:AuthorLines(prefix) abort
+    let lines = []
+    if !empty(get(g:, 'author', ''))
+        call add(lines, a:prefix . 'Author: ' . g:author)
+    endif
+    if !empty(get(g:, 'email', ''))
+        call add(lines, a:prefix . 'Email:  ' . g:email)
+    endif
+    return lines
+endfunction
+
+" 新建 foo.go 时按目录推导 package，推导失败再退回 main
+function! s:GoPackage() abort
+    let name = tolower(fnamemodify(expand('%:p:h'), ':t'))
+    let name = substitute(name, '[^0-9a-z_]', '_', 'g')
+    if name == '' || name !~# '^[a-z_]'
+        return 'main'
+    endif
+    return name
+endfunction
+
+function! s:JavaClass() abort
+    let name = fnamemodify(expand('%:r'), ':t')
+    if name == '' || name !~# '^[A-Za-z_][0-9A-Za-z_]*$'
+        return 'Main'
+    endif
+    return name
+endfunction
+
+function! s:SetTitle() abort
     if line('$') > 1 && getline(1) != ''
         return
     endif
 
-    let date = strftime("%Y-%m-%d %H:%M:%S")
+    let date = strftime('%Y-%m-%d %H:%M:%S')
+    let ft = s:HeaderFT()
+    let file = expand('%')
+    let lines = []
 
-    if &filetype == 'python'
-        call setline(1, "#!/usr/bin/env python3")
-        call append(1, "# -*- coding: utf-8 -*-")
-        call append(2, "\"\"\"")
-        call append(3, "@Author: " . g:author)
-        call append(4, "@Email:  " . g:email)
-        call append(5, "@Date:   " . date)
-        call append(6, "@Description: ")
-        call append(7, "\"\"\"")
-        call append(8, "")
-    elseif &filetype == 'lua'
-        call setline(1, "#!/usr/bin/env lua")
-        call append(1, "-- Author: " . g:author)
-        call append(2, "-- Email:  " . g:email)
-        call append(3, "-- Date:   " . date)
-        call append(4, "-- Description: ")
-        call append(5, "")
-    elseif &filetype == 'go'
-        call setline(1, "package main")
-        call append(1, "")
-        call append(2, "func main() {")
-        call append(3, "}")
-        call append(4, "")
-    elseif &filetype == 'sh'
-        call setline(1, "#!/bin/bash")
-        call append(1, "# Author: " . g:author)
-        call append(2, "# Email:  " . g:email)
-        call append(3, "# Date:   " . date)
-        call append(4, "# Description: ")
-        call append(5, "")
-    elseif &filetype == 'c'
-        call setline(1, "/*************************************************************************")
-        call append(1, " * @file:   ".expand("%"))
-        call append(2, " * @author: " . g:author)
-        call append(3, " * @email:  " . g:email)
-        call append(4, " * @date:   " . date)
-        call append(5, " * @description: ")
-        call append(6, " ************************************************************************/")
-        call append(7, "")
-    elseif &filetype == 'cpp'
-        call setline(1, "/*************************************************************************")
-        call append(1, " * @file:   ".expand("%"))
-        call append(2, " * @author: " . g:author)
-        call append(3, " * @email:  " . g:email)
-        call append(4, " * @date:   " . date)
-        call append(5, " * @description: ")
-        call append(6, " ************************************************************************/")
-        call append(7, "")
-    elseif &filetype == 'java'
-        call setline(1, "/*")
-        call append(1, " * @file:   ".expand("%"))
-        call append(2, " * @author: " . g:author)
-        call append(3, " * @email:  " . g:email)
-        call append(4, " * @date:   " . date)
-        call append(5, " */")
-        call append(6, "")
-        call append(7, "public class ".fnamemodify(expand("%:r"), ":t"))
-        call append(8, "{")
-        call append(9, "    public static void main(String[] args) {")
-        call append(10, "        System.out.println(\"Hello, World!\");")
-        call append(11, "    }")
-        call append(12, "}")
-        call append(13, "")
-    elseif &filetype == 'javascript' || &filetype == 'typescript'
-        call setline(1, "/**")
-        call append(1, " * @file:   ".expand("%"))
-        call append(2, " * @author: " . g:author)
-        call append(3, " * @email:  " . g:email)
-        call append(4, " * @date:   " . date)
-        call append(5, " */")
-        call append(6, "")
-    elseif &filetype == 'rust'
-        call setline(1, "//")
-        call append(1, "// @file:   ".expand("%"))
-        call append(2, "// @author: " . g:author)
-        call append(3, "// @email:  " . g:email)
-        call append(4, "// @date:   " . date)
-        call append(5, "//")
-        call append(6, "")
+    if ft == 'python'
+        let lines = ['#!/usr/bin/env python3', '# -*- coding: utf-8 -*-', '"""']
+        call extend(lines, s:AuthorLines('@'))
+        call extend(lines, ['@Date:   ' . date, '@Description: ', '"""', ''])
+    elseif ft == 'lua'
+        let lines = ['#!/usr/bin/env lua']
+        call extend(lines, s:AuthorLines('-- '))
+        call extend(lines, ['-- Date:   ' . date, '-- Description: ', ''])
+    elseif ft == 'go'
+        let pkg = s:GoPackage()
+        let lines = ['package ' . pkg, '']
+        if pkg ==# 'main'
+            call extend(lines, ['func main() {', '}', ''])
+        endif
+    elseif ft == 'sh' || ft == 'bash'
+        let lines = ['#!/usr/bin/env bash']
+        call extend(lines, s:AuthorLines('# '))
+        call extend(lines, ['# Date:   ' . date, '# Description: ', ''])
+    elseif ft == 'c' || ft == 'cpp'
+        let lines = [
+                    \ '/*************************************************************************',
+                    \ ' * @file:   ' . file,
+                    \ ]
+        if !empty(get(g:, 'author', ''))
+            call add(lines, ' * @author: ' . g:author)
+        endif
+        if !empty(get(g:, 'email', ''))
+            call add(lines, ' * @email:  ' . g:email)
+        endif
+        call extend(lines, [
+                    \ ' * @date:   ' . date,
+                    \ ' * @description: ',
+                    \ ' ************************************************************************/',
+                    \ '',
+                    \ ])
+    elseif ft == 'java'
+        let lines = ['/*', ' * @file:   ' . file]
+        if !empty(get(g:, 'author', ''))
+            call add(lines, ' * @author: ' . g:author)
+        endif
+        if !empty(get(g:, 'email', ''))
+            call add(lines, ' * @email:  ' . g:email)
+        endif
+        call extend(lines, [
+                    \ ' * @date:   ' . date,
+                    \ ' */',
+                    \ '',
+                    \ 'public class ' . s:JavaClass(),
+                    \ '{',
+                    \ '}',
+                    \ '',
+                    \ ])
+    elseif ft == 'javascript' || ft == 'typescript'
+        let lines = ['/**', ' * @file:   ' . file]
+        call extend(lines, s:AuthorLines(' * '))
+        call extend(lines, [' * @date:   ' . date, ' */', ''])
+    elseif ft == 'rust'
+        let lines = ['//', '// @file:   ' . file]
+        call extend(lines, s:AuthorLines('// '))
+        call extend(lines, ['// @date:   ' . date, '//', ''])
+    else
+        return
     endif
-    normal G
+
+    silent! %delete _
+    call setline(1, lines)
+    normal! G
 endfunction
+
+augroup VimoreHeader
+    autocmd!
+    autocmd BufNewFile *.py,*.go,*.sh,*.bash,*.c,*.cc,*.cpp,*.h,*.hpp,*.java,*.js,*.ts,*.rs,*.lua call s:SetTitle()
+augroup END
 
 " ============================================================
 " 21. 自动命令
 " ============================================================
-autocmd FocusGained,BufEnter * :silent! checktime
-autocmd BufEnter * :silent! lcd %:p:h
-autocmd BufReadPost * if line("'\"") > 0 && line("'\"") <= line("$") | exe "normal g'\"" | endif
+augroup VimoreAuto
+    autocmd!
+    autocmd FocusGained,BufEnter * silent! checktime
+
+    " 自动切工作目录是可选行为：它会改变相对路径和 :e 的基准
+    if get(g:, 'vimore_autochdir', 0)
+        autocmd BufEnter * if expand('%:p:h') != '' | silent! lcd %:p:h | endif
+    endif
+
+    autocmd BufReadPost * if line("'\"") > 1 && line("'\"") <= line("$") | execute "normal! g`\"" | endif
+augroup END
 
 " ============================================================
 " 22. 标签栏
 " ============================================================
 set showtabline=1
-
-highlight clear TabLine
-highlight clear TabLineSel
-highlight clear TabLineFill
-
-highlight TabLine       ctermfg=245 ctermbg=237 cterm=NONE
-highlight TabLineSel    ctermfg=220 ctermbg=235 cterm=bold
-highlight TabLineFill   ctermbg=237 cterm=NONE
 
 " 按显示宽度截断，避免把多字节字符切成半个
 function! s:StrTruncate(str, cells) abort
@@ -1267,14 +1699,19 @@ function! MyTabLine()
         if bufname == '' | let bufname = '[No Name]' | endif
 
         let name_len = width - len(i . ':') - 2 - padding
+        if name_len < 1
+            let name_len = 1
+        endif
         if strdisplaywidth(bufname) > name_len
-            let bufname = s:StrTruncate(bufname, name_len) . '…'
+            let bufname = s:StrTruncate(bufname, name_len - 1) . '…'
         endif
 
         let modified = getbufvar(buflist[winnr - 1], '&modified') ? '+' : ''
         let label = ' ' . i . ':' . bufname . modified
         let label = label . repeat(' ', max([0, width - strdisplaywidth(label)]))
 
+        " 每个标签前必须有 %NT，鼠标点击才会切到对应标签
+        let s .= '%' . i . 'T'
         if i == t
             let s .= '%#TabLineSel#' . label
         else
@@ -1313,6 +1750,10 @@ function! AddPair(pair)
     let map = {'(' : ')', '[' : ']', '{' : '}', '"' : '"', "'" : "'", "<" : ">"}
     if !has_key(map, a:pair)
         echo "不支持的括号: " . a:pair
+        return
+    endif
+    if !get(g:, 'vimore_from_visual', 0)
+        echo "需要先在可视模式选中内容"
         return
     endif
     let left = a:pair
@@ -1356,6 +1797,42 @@ function! GitCommit() abort
         return
     endif
     execute '!git commit -m ' . shellescape(l:msg)
+endfunction
+
+function! GitAdd() abort
+    if expand('%') == ''
+        echo 'vimore: 当前 buffer 没有文件名'
+        return
+    endif
+    execute '!git add ' . shellescape(expand('%:p'))
+endfunction
+
+" 可视模式进入菜单时，操作只作用于选区；普通模式下作用于整个文件
+function! s:RangeCmd(cmd) abort
+    if get(g:, 'vimore_from_visual', 0)
+        execute "'<,'>" . a:cmd
+    else
+        execute a:cmd
+    endif
+endfunction
+
+function! s:DeleteBlankLines() abort
+    call s:RangeCmd('g/^\s*$/d')
+endfunction
+
+function! s:SortLines(kind) abort
+    if a:kind ==# 'unique'
+        call s:RangeCmd('sort u')
+    elseif a:kind ==# 'number'
+        call s:RangeCmd('sort n')
+    else
+        call s:RangeCmd('sort')
+    endif
+endfunction
+
+" 按显示宽度左对齐（中文标签不会把菜单撑歪）
+function! s:Ljust(str, cells) abort
+    return a:str . repeat(' ', max([0, a:cells - strdisplaywidth(a:str)]))
 endfunction
 
 " === 菜单主体 ===
@@ -1415,17 +1892,17 @@ let g:leader_menu = {
             \ 'P':  ['从系统剪切板粘贴(前)', ':call WlClipboardPaste() | normal! "+P<CR>'],
             \ 's':  {
             \ 'name': '整理',
-            \ 'd': ['删除空行',       ':silent! g/^\s*$/d<CR>'],
-            \ 's': ['排序选中行',     ':sort<CR>'],
-            \ 'u': ['去重排序',       ':sort u<CR>'],
-            \ 'n': ['数字排序',       ':sort n<CR>'],
+            \ 'd': ['删除空行',       function('s:DeleteBlankLines')],
+            \ 's': ['排序选中行',     function('s:SortLines', ['name'])],
+            \ 'u': ['去重排序',       function('s:SortLines', ['unique'])],
+            \ 'n': ['数字排序',       function('s:SortLines', ['number'])],
             \ },
             \ 'g':  {
             \ 'name': 'Git',
             \ 's': ['git status',     ':!git status<CR>'],
             \ 'd': ['git diff',       ':!git diff<CR>'],
             \ 'l': ['git log',        ':!git log --oneline --graph<CR>'],
-            \ 'a': ['git add',        ':!git add %<CR>'],
+            \ 'a': ['git add',        function('GitAdd')],
             \ 'c': ['git commit',     function('GitCommit')],
             \ 'p': ['git push',       ':!git push<CR>'],
             \ 'P': ['git pull',       ':!git pull<CR>'],
@@ -1443,7 +1920,7 @@ let g:leader_menu = {
             \ 'M': ['左移标签',       ':tabmove -1<CR>'],
             \ 'N': ['右移标签',       ':tabmove +1<CR>'],
             \ 'l': ['列出标签',       ':tabs<CR>'],
-            \ 'u': ['恢复关闭标签',   ':tabnew #<CR>'],
+            \ 'u': ['新标签打开上一个文件', ':tabnew #<CR>'],
             \ 'd': ['新标签打开目录', ':tabnew .<CR>'],
             \ 'f': ['文件浏览器',     ':Explore<CR>'],
             \ 'F': ['垂直文件浏览器', ':Vexplore<CR>']
@@ -1451,12 +1928,9 @@ let g:leader_menu = {
             \ }
 
 " === 可视模式单独快捷键 ===
-" 缩进
+" 缩进选区并保持选中（方便连续缩进）
 xnoremap <silent> < <gv
 xnoremap <silent> > >gv
-" 缩进选区并保持选中（方便连续缩进）
-vnoremap <silent> < <gv
-vnoremap <silent> > >gv
 
 
 " === 菜单引擎 ===
@@ -1473,10 +1947,10 @@ function! s:RenderMenu(menu, prefix)
         if type(item) == v:t_dict
             " 子菜单：显示键 + <名字>
             let name = has_key(item, 'name') ? item['name'] : k
-            call add(sub_lines, printf(' %-6s <%s>', k, name))
+            call add(sub_lines, ' ' . s:Ljust(k, 6) . ' <' . name . '>')
         else
             " 叶子节点
-            call add(leaf_lines, printf(' %-6s %s', k, item[0]))
+            call add(leaf_lines, ' ' . s:Ljust(k, 6) . ' ' . item[0])
         endif
     endfor
 
@@ -1515,7 +1989,7 @@ function! s:RunMenuItem(item)
     elseif l:Action[0] == ':'
         let l:cmd = substitute(l:Action, '<CR>$', '', '')
         " 输出型命令不走 silent，否则屏幕不刷新
-        if l:cmd =~ '^:\(reg\|tabs\|marks\|jumps\|ls\|buffers\|messages\)\>'
+        if l:cmd =~ '^:!' || l:cmd =~ '^:\(reg\|tabs\|marks\|jumps\|ls\|buffers\|messages\|copen\|cclose\)\>'
             execute l:cmd
         else
             silent execute l:cmd
@@ -1527,22 +2001,49 @@ function! s:RunMenuItem(item)
     endif
 endfunction
 
+" 读取一个键；超时返回空串，菜单自己会关掉
+function! s:GetChar(timeout) abort
+    let start = reltime()
+    while 1
+        let char = getcharstr(0)
+        if char != ''
+            return char
+        endif
+        if a:timeout > 0 && reltimefloat(reltime(start)) * 1000 >= a:timeout
+            return ''
+        endif
+        sleep 20m
+    endwhile
+endfunction
+
+" 离开可视模式，但不改变已经保存的 '< '> 标记
+function! s:LeaveVisual(from_visual) abort
+    if a:from_visual && index(['v', 'V', nr2char(22)], mode()) >= 0
+        execute "normal! \<Esc>"
+    endif
+endfunction
+
 " == 主提示循环 ==
 function! s:LeaderPrompt(...)
     let silent_mode = a:0 > 0 ? a:1 : 0
     " 是否来自可视模式：由映射显式传入。
-    " 因为映射是 ':' 开头的，执行到这里时可视模式早已退出，mode() 只会返回 'n'，
-    " 用 mode() 判断永远得到 0，所以不能靠 mode()。
+    " 映射以 ':' 开头，进入函数时可视模式已经退出，只能靠参数判断。
     let save_visual = a:0 > 1 ? a:2 : 0
 
-    let g:vimore_from_visual = save_visual   " ← 存到全局，跨函数可读
+    let g:vimore_from_visual = save_visual
 
     let save_start = getpos("'<")
     let save_end = getpos("'>")
     let save_cur = getpos('.')
 
+    " 重新选中，让菜单打开时仍能看到高亮的选区
+    if save_visual
+        silent! normal! gv
+    endif
+
     let menu = g:leader_menu
     let prefix = ''
+    let timeout = get(g:, 'vimore_menu_timeout', 3000)
 
     while 1
         let lines = s:RenderMenu(menu, prefix)
@@ -1558,20 +2059,20 @@ function! s:LeaderPrompt(...)
         if !silent_mode
             let width = 0
             for l in lines
-                if len(l) > width | let width = len(l) | endif
+                let width = max([width, strdisplaywidth(l)])
             endfor
             if width < 24 | let width = 24 | endif
 
             if exists('*popup_create')
                 let winid = popup_create(lines, #{
-                            \ line: &lines - len(lines) - 3,
-                            \ col: &columns - width - 4,
+                            \ line: max([0, &lines - len(lines) - 3]),
+                            \ col: max([0, &columns - width - 4]),
                             \ minwidth: width + 2,
                             \ maxwidth: width + 2,
                             \ padding: [0, 1, 0, 1],
                             \ title: title,
                             \ })
-                redraw!
+                redraw
             else
                 redraw
                 echo title . "\n" . join(lines, "\n")
@@ -1581,7 +2082,7 @@ function! s:LeaderPrompt(...)
             let winid = -1
         endif
 
-        let char = getcharstr()
+        let char = s:GetChar(timeout)
 
         if !silent_mode && exists('*popup_close') && winid != -1
             call popup_close(winid)
@@ -1590,7 +2091,15 @@ function! s:LeaderPrompt(...)
             redraw
         endif
 
-        if char == "\<Esc>"
+        " Esc / Ctrl-C / 超时：关闭菜单；可视模式下保留选区
+        if char == '' || char == "\<Esc>" || char == "\<C-c>"
+            call s:LeaveVisual(save_visual)
+            if save_visual
+                call setpos("'<", save_start)
+                call setpos("'>", save_end)
+                call setpos('.', save_cur)
+                silent! normal! gv
+            endif
             return
         endif
 
@@ -1600,7 +2109,8 @@ function! s:LeaderPrompt(...)
                 let prefix .= char
                 let menu = item
             else
-                " 恢复选区，再执行
+                call s:LeaveVisual(save_visual)
+                " 恢复选区标记和光标，再执行
                 call setpos("'<", save_start)
                 call setpos("'>", save_end)
                 call setpos('.', save_cur)
@@ -1611,11 +2121,46 @@ function! s:LeaderPrompt(...)
             call s:RunMenuItem(menu['_'])
             return
         else
+            call s:LeaveVisual(save_visual)
             return
         endif
     endwhile
 endfunction
 
-nnoremap <silent> <Leader> :call <SID>LeaderPrompt()<CR>
-xnoremap <silent> <Leader> :<C-u>call <SID>LeaderPrompt(1, 1)<CR>
+function! VimoreMenu(...) abort
+    call call(function('s:LeaderPrompt'), a:000)
+endfunction
+
+nnoremap <silent> <Leader> <Cmd>call <SID>LeaderPrompt()<CR>
+xnoremap <silent> <Leader> :<C-u>call <SID>LeaderPrompt(0, 1)<CR>
+command! VimoreMenu call VimoreMenu()
+
+" 教程和 VimMaze 是随仓库附带的可选文件；只拷走单个 vimrc 时
+" 优雅提示而不是报错（核心编辑功能完全不依赖它们）
+function! s:Companion(name) abort
+    let path = s:root . '/' . a:name
+    if filereadable(path)
+        return path
+    endif
+    echo 'vimore: 找不到随附文件 ' . path . '（单文件安装属正常）'
+    return ''
+endfunction
+
+function! s:OpenTutor() abort
+    let path = s:Companion('tutor/Vimore.tutor.txt')
+    if path != ''
+        execute 'edit ' . fnameescape(path)
+    endif
+endfunction
+command! VimoreTutor call s:OpenTutor()
+
+function! s:StartVimMaze() abort
+    let path = s:Companion('VimMaze.vim')
+    if path == ''
+        return
+    endif
+    execute 'source ' . fnameescape(path)
+    VimMaze
+endfunction
+command! VimMaze call s:StartVimMaze()
 

@@ -2,7 +2,7 @@
 " Vimore
 " 作者: BiaoZyx
 " 邮箱: BiaoZyx@outlook.com
-" 版本: 3.28
+" 版本: 3.29
 " ============================================================
 "  _   ___
 " | | / (_)_ _  ___  _______
@@ -1546,14 +1546,17 @@ function! s:HeaderFT() abort
     return get(s:header_ft, tolower(expand('%:e')), '')
 endfunction
 
-function! s:AuthorLines(prefix) abort
-    let lines = []
+" 统一的 Doxygen 字段块；prefix 决定每行的注释前缀
+function! s:MetaLines(prefix, file, date) abort
+    let lines = [a:prefix . '@file    ' . a:file]
     if !empty(get(g:, 'author', ''))
-        call add(lines, a:prefix . 'Author: ' . g:author)
+        call add(lines, a:prefix . '@author  ' . g:author)
     endif
     if !empty(get(g:, 'email', ''))
-        call add(lines, a:prefix . 'Email:  ' . g:email)
+        call add(lines, a:prefix . '@email   ' . g:email)
     endif
+    call add(lines, a:prefix . '@date    ' . a:date)
+    call add(lines, a:prefix . '@brief   ')
     return lines
 endfunction
 
@@ -1580,56 +1583,43 @@ function! s:SetTitle() abort
         return
     endif
 
-    let date = strftime('%Y-%m-%d %H:%M:%S')
+    " 创建日期只到天；时刻交给 git，不写进每个文件
+    let date = strftime('%Y-%m-%d')
     let ft = s:HeaderFT()
-    let file = expand('%')
+    let file = fnamemodify(expand('%:t'), ':t')
     let lines = []
 
     if ft == 'python'
-        let lines = ['#!/usr/bin/env python3', '# -*- coding: utf-8 -*-', '"""']
-        call extend(lines, s:AuthorLines('@'))
-        call extend(lines, ['@Date:   ' . date, '@Description: ', '"""', ''])
+        " Python 3 源码默认 UTF-8（PEP 3120），不再需要 coding 声明
+        let lines = ['#!/usr/bin/env python3', '"""']
+        call extend(lines, s:MetaLines('', file, date))
+        call extend(lines, ['"""', ''])
     elseif ft == 'lua'
-        let lines = ['#!/usr/bin/env lua']
-        call extend(lines, s:AuthorLines('-- '))
-        call extend(lines, ['-- Date:   ' . date, '-- Description: ', ''])
-    elseif ft == 'go'
-        let pkg = s:GoPackage()
-        let lines = ['package ' . pkg, '']
-        if pkg ==# 'main'
-            call extend(lines, ['func main() {', '}', ''])
-        endif
+        let lines = ['#!/usr/bin/env lua', '--[[']
+        call extend(lines, s:MetaLines('', file, date))
+        call extend(lines, [']]', ''])
     elseif ft == 'sh' || ft == 'bash'
         let lines = ['#!/usr/bin/env bash']
-        call extend(lines, s:AuthorLines('# '))
-        call extend(lines, ['# Date:   ' . date, '# Description: ', ''])
+        call extend(lines, s:MetaLines('# ', file, date))
+        call add(lines, '')
+    elseif ft == 'go'
+        let lines = s:MetaLines('// ', file, date)
+        call add(lines, '')
+        let pkg = s:GoPackage()
+        call add(lines, 'package ' . pkg)
+        if pkg ==# 'main'
+            call extend(lines, ['', 'func main() {', '}', ''])
+        else
+            call add(lines, '')
+        endif
     elseif ft == 'c' || ft == 'cpp'
-        let lines = [
-                    \ '/*************************************************************************',
-                    \ ' * @file:   ' . file,
-                    \ ]
-        if !empty(get(g:, 'author', ''))
-            call add(lines, ' * @author: ' . g:author)
-        endif
-        if !empty(get(g:, 'email', ''))
-            call add(lines, ' * @email:  ' . g:email)
-        endif
-        call extend(lines, [
-                    \ ' * @date:   ' . date,
-                    \ ' * @description: ',
-                    \ ' ************************************************************************/',
-                    \ '',
-                    \ ])
+        let lines = ['/**']
+        call extend(lines, s:MetaLines(' * ', file, date))
+        call extend(lines, [' */', ''])
     elseif ft == 'java'
-        let lines = ['/*', ' * @file:   ' . file]
-        if !empty(get(g:, 'author', ''))
-            call add(lines, ' * @author: ' . g:author)
-        endif
-        if !empty(get(g:, 'email', ''))
-            call add(lines, ' * @email:  ' . g:email)
-        endif
+        let lines = ['/**']
+        call extend(lines, s:MetaLines(' * ', file, date))
         call extend(lines, [
-                    \ ' * @date:   ' . date,
                     \ ' */',
                     \ '',
                     \ 'public class ' . s:JavaClass(),
@@ -1638,13 +1628,12 @@ function! s:SetTitle() abort
                     \ '',
                     \ ])
     elseif ft == 'javascript' || ft == 'typescript'
-        let lines = ['/**', ' * @file:   ' . file]
-        call extend(lines, s:AuthorLines(' * '))
-        call extend(lines, [' * @date:   ' . date, ' */', ''])
+        let lines = ['/**']
+        call extend(lines, s:MetaLines(' * ', file, date))
+        call extend(lines, [' */', ''])
     elseif ft == 'rust'
-        let lines = ['//', '// @file:   ' . file]
-        call extend(lines, s:AuthorLines('// '))
-        call extend(lines, ['// @date:   ' . date, '//', ''])
+        let lines = s:MetaLines('//! ', file, date)
+        call add(lines, '')
     else
         return
     endif

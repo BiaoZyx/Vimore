@@ -565,9 +565,10 @@
  新建 .py .go .sh .bash .c .cc .cpp .h .hpp .java .js .ts
  .rs .lua 这些文件时，Vimore 会自动帮你填好开头。
 
- 1. 输入 :e hello.py 新建一个空文件，文件头当时就填好了，看
-    看是不是有 shebang、编码行，和一块带作者、邮箱、日期的
-   三引号注释；再 :e hello.go 看 package 和 main 函数。
+ 1. 输入 :e hello.py 新建一个空文件，文件头当时就填好了：shebang
+    后面是三引号注释，里面按 @file / @author / @email / @date /
+    @brief 分点列清楚；Python 3 默认 UTF-8，不再写编码行。再 :e
+    hello.go 看 package 和 main 函数。
  2. 保存再编辑，文件头保持原样；换别的后缀再试，头是各写各
     的。
 

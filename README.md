@@ -122,8 +122,20 @@ ln -s ~/.vim/vimore/Vimore.vimrc ~/.vimrc
 ### 文件头自动生成
 
 新建 `.py` / `.go` / `.sh` / `.bash` / `.c` / `.cc` / `.cpp` / `.h` /
-`.hpp` / `.java` / `.js` / `.ts` / `.rs` / `.lua` 时自动插入文件头。
-Go 的 package 按所在目录推导，Java 的类名按文件名推导。
+`.hpp` / `.java` / `.js` / `.ts` / `.rs` / `.lua` 时自动插入 **Doxygen 风格**
+文件头，按文件类型用 `#` / `"""` / `//` / `/* */` / `--[[]]` 等注释包裹：
+
+```
+@file    文件名
+@author  作者
+@email   邮箱
+@date    创建日期（只到天）
+@brief   简介
+```
+
+Python 3 源码默认 UTF-8，不再生成 `# -*- coding: utf-8 -*-`；许可证全文在
+根目录 `LICENSE`（GPL-3.0），不重复贴到每个文件里。Go 的 package 按所在
+目录推导，Java 的类名按文件名推导。
 
 作者和邮箱在 `.vimrc` 顶部配置：
 

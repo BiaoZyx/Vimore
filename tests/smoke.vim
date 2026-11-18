@@ -32,10 +32,12 @@ call s:Check('命令 VimMaze', exists(':VimMaze'), 2)
 " 文件头：Go 按目录推导 package，附加后缀也支持
 call mkdir(s:tmp . '/my-proj', 'p')
 execute 'edit ' . fnameescape(s:tmp . '/my-proj/x.go')
-call s:Check('Go package', getline(1), 'package my_proj')
+call s:Check('Go package', getline(1, '$')->filter('v:val =~# "^package "')->get(0, ''), 'package my_proj')
+call s:Check('Go 头 Doxygen 字段', search('// @file    x.go', 'nw') > 0, 1)
 bwipeout!
 execute 'edit ' . fnameescape(s:tmp . '/x.cc')
-call s:Check('cc 文件头', getline(1)[0:8], '/********')
+call s:Check('cc 文件头', getline(1), '/**')
+call s:Check('cc 头 Doxygen 字段', search(' \* @date    ', 'nw') > 0, 1)
 bwipeout!
 execute 'edit ' . fnameescape(s:tmp . '/x.bash')
 call s:Check('bash 文件头', getline(1), '#!/usr/bin/env bash')

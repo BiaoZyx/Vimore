@@ -79,7 +79,7 @@ ln -s ~/.vim/vimore/Vimore.vimrc ~/.vimrc
 - 相对行号 + 插入模式自动切绝对行号
 - 自定义状态栏：模式指示器、文件名、文件类型、编码、行列、时间
 - 自定义标签栏：标签名截断、修改标记、当前标签高亮
-- 行尾空格高亮 + 保存时自动清理
+- 行尾空格显示成淡灰 `·` + 保存时自动清理
 - `colorcolumn=120` 边界线
 
 ### 编辑
@@ -162,6 +162,7 @@ Vim 版**不需要** `colors/` 目录，单文件就是完全体。
 ```vim
 let g:vimore_autochdir = 0        " 1 = 进文件时自动 cd 到文件目录（默认关）
 let g:vimore_strip_whitespace = 1 " 0 = 保存时不清理行尾空格
+let g:vimore_show_extra_whitespace = 1 " 0 = 不显示行尾空格的 ·
 let g:vimore_menu_timeout = 3000  " 菜单无操作后自动关闭的毫秒数
 ```
 

@@ -2,7 +2,7 @@
 " Vimore
 " 作者: BiaoZyx
 " 邮箱: BiaoZyx@outlook.com
-" 版本: 3.27
+" 版本: 3.28
 " ============================================================
 "  _   ___
 " | | / (_)_ _  ___  _______
@@ -23,6 +23,8 @@ let g:vimore_autochdir = get(g:, 'vimore_autochdir', 0)
 let g:vimore_strip_whitespace = get(g:, 'vimore_strip_whitespace', 1)
 " Leader 菜单无操作多少毫秒后自动关闭
 let g:vimore_menu_timeout = get(g:, 'vimore_menu_timeout', 3000)
+" 设为 0 可不显示行尾空格高亮（终端 / nofile 缓冲本来就不显示）
+let g:vimore_show_extra_whitespace = get(g:, 'vimore_show_extra_whitespace', 1)
 
 " ============================================================
 " 1. 基础设置
@@ -166,8 +168,8 @@ call s:Hl('TabLineSel', 'fg0', 'bg3', 'bold')
 call s:Hl('TabLineFill', '', 'bg1', 'NONE')
 call s:Hl('NonText', 'bg4', '', 'NONE')
 call s:Hl('SpecialKey', 'bg4', '', 'NONE')
-call s:Hl('Whitespace', 'bg4', '', 'NONE')
-call s:Hl('ExtraWhitespace', '', 'bg2', 'NONE')
+call s:Hl('Whitespace', 'punct', '', 'NONE')
+call s:Hl('ExtraWhitespace', 'punct', '', 'NONE')
 call s:Hl('Conceal', 'fg2', '', 'NONE')
 call s:Hl('Directory', 'blue', '', 'bold')
 call s:Hl('Title', 'yellow', '', 'NONE')
@@ -505,7 +507,7 @@ function! SmartCondition(char)
     endif
 endfunction
 " 应用特殊映射
-"inoremap <silent> { <C-r>=SmartCondition('{')<CR>  " 不再补全左大括号
+inoremap <silent> { <C-r>=SmartCondition('{')<CR>
 inoremap <silent> < <C-r>=SmartCondition('<')<CR>
 inoremap <silent> " <C-r>=SmartCondition('"')<CR>
 
@@ -1074,11 +1076,26 @@ function! StripTrailingWhitespaceManual() abort
     call timer_start(2000, {-> execute('echo ""')})
 endfunction
 
+" 行尾空格显示成淡灰的 ·；tab / 行尾 / 折行标记设成空格等于关掉，
+" 避免满屏 ^I 和 $。只在可编辑的普通文件里开 list。
+set list
+set listchars=trail:·,tab:\ \ ,eol:\ ,extends:\ ,precedes:\ ,nbsp:\
+
+function! s:EnsureTrailingList() abort
+    let enabled = get(g:, 'vimore_show_extra_whitespace', 1)
+                \ && &buftype == '' && &modifiable
+    setlocal nolist
+    if enabled
+        setlocal list
+    endif
+endfunction
+
 augroup VimoreWhitespace
     autocmd!
-    autocmd BufWinEnter,WinEnter * match ExtraWhitespace /\s\+$/
+    autocmd BufWinEnter,WinEnter,TerminalOpen * call s:EnsureTrailingList()
     autocmd BufWritePre * call StripTrailingWhitespace()
 augroup END
+call s:EnsureTrailingList()
 
 " ============================================================
 " 15. 边界线

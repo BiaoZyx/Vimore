@@ -2,7 +2,7 @@
 " Vimore
 " 作者: BiaoZyx
 " 邮箱: BiaoZyx@outlook.com
-" 版本: 3.31
+" 版本: 3.32
 " ============================================================
 "  _   ___
 " | | / (_)_ _  ___  _______
@@ -1978,8 +1978,9 @@ function! s:ShowKeys() abort
         call add(lines, '')
     endfor
     execute 'botright new'
-    setlocal buftype=nofile bufhidden=wipe noswapfile nomodifiable
+    setlocal buftype=nofile bufhidden=wipe noswapfile
     call setline(1, lines)
+    setlocal nomodifiable
     nnoremap <buffer> <silent> q :close<CR>
     nnoremap <buffer> <silent> <Esc> :close<CR>
 endfunction

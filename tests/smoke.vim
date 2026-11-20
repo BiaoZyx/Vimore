@@ -28,6 +28,10 @@ call s:Check('工作目录后缀', &undodir =~# '//$', 1)
 call s:Check('命令 VimoreMenu', exists(':VimoreMenu'), 2)
 call s:Check('命令 VimoreTutor', exists(':VimoreTutor'), 2)
 call s:Check('命令 VimMaze', exists(':VimMaze'), 2)
+call s:Check('命令 VimoreHealth', exists(':VimoreHealth'), 2)
+call s:Check('命令 VimoreKeys', exists(':VimoreKeys'), 2)
+call s:Check('updatetime', &updatetime, 250)
+call s:Check('splitright/splitbelow', &splitright == 1 && &splitbelow == 1, 1)
 
 " 文件头：Go 按目录推导 package，附加后缀也支持
 call mkdir(s:tmp . '/my-proj', 'p')
@@ -37,6 +41,13 @@ call s:Check('Go 头 Doxygen 字段', search('// @file    x.go', 'nw') > 0, 1)
 bwipeout!
 execute 'edit ' . fnameescape(s:tmp . '/x.cc')
 call s:Check('cc 文件头', getline(1), '/**')
+" 容器末尾回车：右括号换行
+enew!
+call setline(1, 'local xs = [1, 2, 3]')
+call cursor(1, 20)
+call s:Check('容器拆分返回值', SplitContainerEnd(), 1)
+call s:Check('容器拆分右括号', getline(3), ']')
+bwipeout!
 call s:Check('cc 头 Doxygen 字段', search(' \* @date    ', 'nw') > 0, 1)
 bwipeout!
 execute 'edit ' . fnameescape(s:tmp . '/x.bash')

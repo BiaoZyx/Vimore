@@ -96,6 +96,9 @@ ln -s ~/.vim/vimore/Vimore.vimrc ~/.vimrc
 
 ### 终端
 
+- 在 `()` `[]` `{}` 中间回车拆三行；在数组等容器末尾回车把右括号挪到下一行
+- 两种拆分都留在插入模式，不经过 `<C-o>`
+- `:set splitright` / `splitbelow` + `updatetime=250`
 - `<Leader>tt` 底部终端
 - `<Leader>tv` 右侧终端
 - `<Leader>tr` 在最新终端运行当前文件
@@ -165,6 +168,8 @@ Vim 版**不需要** `colors/` 目录，单文件就是完全体。
 ## 命令与可选开关
 
 - `:VimoreMenu` — 直接用命令打开 Leader 菜单
+- `:VimoreKeys` — 新缓冲区里按模式列出所有键位
+- `:VimoreHealth` — 彩色文字标记的自检（版本、配色、工具、随附文件）
 - `:VimoreTutor` — 打开 28 章的 Vimore 交互式教程（`tutor/vim.tutor.txt` 是 23 章的原版 Vim 教程）
 - `:VimMaze` — 打开仓库根目录的迷宫小游戏（按 `?` 看帮助，`q` 退出）
 - `:checkhealth` 之外的健康检查：`vim --clean -Nu Vimore.vimrc -c 'messages' -c 'qa!'`

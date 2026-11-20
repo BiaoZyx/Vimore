@@ -2,7 +2,7 @@
 " Vimore
 " 作者: BiaoZyx
 " 邮箱: BiaoZyx@outlook.com
-" 版本: 3.30
+" 版本: 3.31
 " ============================================================
 "  _   ___
 " | | / (_)_ _  ___  _______
@@ -327,6 +327,9 @@ set hidden
 set history=2000
 set undolevels=1000
 set undofile
+set updatetime=250
+set splitright
+set splitbelow
 
 " 自动创建目录
 if !isdirectory(expand('~/.vim/undodir'))
@@ -353,7 +356,7 @@ set softtabstop=4
 set expandtab
 set smarttab
 set autoindent
-set cindent
+" C 系文件由自带 indent/c.vim 设置 cindent；不要全局打开
 set shiftround
 set infercase
 set formatoptions+=mB
@@ -966,6 +969,53 @@ inoremap <silent><expr> <S-TAB> pumvisible() ? "\<C-p>" : "\<S-TAB>"
 " <CR> 智能拆分
 inoremap <silent><expr> <CR> pumvisible() ? "\<C-y>" : SmartEnter()
 
+function! s:IndentStep() abort
+    let sw = max([&shiftwidth, 1])
+    return &expandtab ? repeat(' ', sw) : "\t"
+endfunction
+
+" 光标停在容器右括号上，左侧有同类左括号和内容时返回 [左括号下标, 内容]
+function! s:ContainerAtEnd(line, col) abort
+    let close_char = a:line[a:col]
+    if close_char ==# ''
+        return []
+    endif
+    let open_char = get({'}': '{', ')': '(', ']': '['}, close_char, '')
+    if open_char ==# ''
+        return []
+    endif
+
+    let depth = 1
+    let open_pos = -1
+    for i in range(a:col - 1, 0, -1)
+        let ch = a:line[i]
+        if ch ==# close_char
+            let depth += 1
+        elseif ch ==# open_char
+            let depth -= 1
+            if depth == 0
+                let open_pos = i
+                break
+            endif
+        endif
+    endfor
+
+    if open_pos < 0 || open_pos >= a:col
+        return []
+    endif
+    let inner = strpart(a:line, open_pos + 1, a:col - open_pos - 1)
+    if inner =~# '^\s*$'
+        return []
+    endif
+    " 右括号后面只能有空白，确保是在容器末尾
+    if strpart(a:line, a:col + 1) !~# '^\s*$'
+        return []
+    endif
+    return [open_pos, inner]
+endfunction
+
+" expr 映射求值期间有 textlock，不能直接改 buffer；用 timer 延后执行。
+" 返回 <Ignore> 保持插入模式，避免 <C-o> 短暂进 normal 造成状态闪动。
 function! SmartEnter()
     let line = getline('.')
     let col = col('.') - 1
@@ -975,8 +1025,14 @@ function! SmartEnter()
         let after = line[col]
         let pairs = {'{': '}', '(': ')', '[': ']'}
         if has_key(pairs, before) && after == pairs[before]
-            return "\<C-o>:call SplitPair()\<CR>"
+            call timer_start(0, function('SplitPair'))
+            return "\<Ignore>"
         endif
+    endif
+
+    if !empty(s:ContainerAtEnd(line, col))
+        call timer_start(0, function('SplitContainerEnd'))
+        return "\<Ignore>"
     endif
 
     return "\<CR>"
@@ -991,10 +1047,8 @@ function! SplitPair() abort
     endif
 
     let indent = matchstr(line, '^\s*')
-    let sw = max([&shiftwidth, 1])
     " Go 等 noexpandtab 文件里内层缩进应该用 Tab，不能混进空格
-    let step = &expandtab ? repeat(' ', sw) : "\t"
-    let inner = indent . step
+    let inner = indent . s:IndentStep()
 
     let line1 = line[:col-1]
     let line2 = inner
@@ -1005,6 +1059,28 @@ function! SplitPair() abort
     call append(lnum + 1, line3)
 
     call cursor(lnum + 1, len(line2) + 1)
+endfunction
+
+" 容器末尾回车：右括号挪到下一行，内容单独占一行
+function! SplitContainerEnd() abort
+    let lnum = line('.')
+    let line = getline(lnum)
+    let col = col('.') - 1
+    let found = s:ContainerAtEnd(line, col)
+    if empty(found)
+        return 0
+    endif
+
+    let inner = substitute(found[1], '^\s*\(.\{-}\)\s*$', '\1', '')
+    let indent = matchstr(line, '^\s*')
+    let middle = indent . s:IndentStep() . inner
+    let last = indent . strpart(line, col)
+
+    call setline(lnum, strpart(line, 0, found[0] + 1))
+    call append(lnum, middle)
+    call append(lnum + 1, last)
+    call cursor(lnum + 1, len(middle) + 1)
+    return 1
 endfunction
 
 " 各语言补全函数
@@ -1842,6 +1918,75 @@ function! s:Ljust(str, cells) abort
 endfunction
 
 " === 菜单主体 ===
+function! s:HealthLine(hl, text) abort
+    execute 'echohl ' . a:hl
+    echo a:text
+    echohl None
+endfunction
+
+function! VimoreHealth() abort
+    redraw
+    call s:HealthLine('Title', 'Vimore 自检')
+    call s:HealthLine('ModeMsg', '[OK] Vim ' . v:version)
+    call s:HealthLine('ModeMsg', '[OK] 配色名: ' . get(g:, 'colors_name', '未设置'))
+    call s:HealthLine('ModeMsg', '[OK] Leader: ' . string(get(g:, 'mapleader', ' ')))
+    call s:HealthLine('Directory', '[--] 开关: autochdir=' . get(g:, 'vimore_autochdir', 0)
+                \ . ' strip_whitespace=' . get(g:, 'vimore_strip_whitespace', 1)
+                \ . ' menu_timeout=' . get(g:, 'vimore_menu_timeout', 3000))
+    let fmt = []
+    for tool in ['black', 'gofmt', 'prettier', 'clang-format', 'shfmt', 'stylua', 'zig']
+        if executable(tool) | call add(fmt, tool) | endif
+    endfor
+    call s:HealthLine(empty(fmt) ? 'WarningMsg' : 'ModeMsg',
+                \ (empty(fmt) ? '[WARN]' : '[OK]') . ' 格式化工具: ' . (empty(fmt) ? '未检测到' : join(fmt, ', ')))
+    let chk = []
+    for tool in ['luac', 'pylint', 'flake8', 'shellcheck', 'jq']
+        if executable(tool) | call add(chk, tool) | endif
+    endfor
+    call s:HealthLine(empty(chk) ? 'WarningMsg' : 'ModeMsg',
+                \ (empty(chk) ? '[WARN]' : '[OK]') . ' 检查工具: ' . (empty(chk) ? '未检测到' : join(chk, ', ')))
+    if filereadable(s:root . '/tutor/Vimore.tutor.txt')
+        call s:HealthLine('ModeMsg', '[OK] 交互式教程存在（:VimoreTutor）')
+    else
+        call s:HealthLine('WarningMsg', '[WARN] 找不到教程（单文件安装属正常）')
+    endif
+    if filereadable(s:root . '/VimMaze.vim')
+        call s:HealthLine('ModeMsg', '[OK] VimMaze 存在（:VimMaze）')
+    else
+        call s:HealthLine('WarningMsg', '[WARN] 找不到 VimMaze.vim')
+    endif
+    call s:HealthLine('Title', '详细运行记录请用 :messages 查看')
+endfunction
+
+function! s:ShowKeys() abort
+    let names = {'n': '普通模式', 'x': '可视模式', 'i': '插入模式', 't': '终端模式'}
+    let lines = ['Vimore 快捷键总览', '按 q 或 Esc 关闭', '']
+    for mode in ['n', 'x', 'i', 't']
+        call add(lines, '== ' . get(names, mode, mode) . ' ==')
+        let maps = []
+        try
+            let maps = split(execute(mode . 'map'), "\n")
+        catch
+        endtry
+        if empty(maps)
+            call add(lines, '  (无)')
+        else
+            for l in maps
+                call add(lines, '  ' . substitute(l, '^\s*', '', ''))
+            endfor
+        endif
+        call add(lines, '')
+    endfor
+    execute 'botright new'
+    setlocal buftype=nofile bufhidden=wipe noswapfile nomodifiable
+    call setline(1, lines)
+    nnoremap <buffer> <silent> q :close<CR>
+    nnoremap <buffer> <silent> <Esc> :close<CR>
+endfunction
+
+command! VimoreHealth call VimoreHealth()
+command! VimoreKeys call s:ShowKeys()
+
 let g:leader_menu = {
             \ 'w':  {
             \ 'name': '写入',
@@ -1862,10 +2007,14 @@ let g:leader_menu = {
             \ 'c':  {
             \ 'name': '维护',
             \ 'c': ['代码检查',       function('CheckCode')],
+            \ 'h': ['运行自检',       function('VimoreHealth')],
+            \ 'k': ['快捷键总览',     function('s:ShowKeys')],
+            \ 't': ['打开教程',       ':VimoreTutor<CR>'],
             \ 'v': ['重新加载配置',   ':call timer_start(0, {-> execute("source $MYVIMRC")})<CR>'],
             \ 'e': ['编辑配置',       ':e $MYVIMRC<CR>'],
             \ },
             \ '/':  ['注释/取消注释',     function('ToggleCommentSmart')],
+            \ '?':  ['打开教程',         ':VimoreTutor<CR>'],
             \ 'b':  {
             \ 'name': '括号',
             \ 'd': {

@@ -9,6 +9,7 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TARGET="$HOME/.vim/vimore"
 RC="$HOME/.vimrc"
 MODE="full"
+NO_BACKUP=0
 
 usage() {
     cat <<EOF
@@ -17,6 +18,7 @@ usage() {
   --minimal    只复制 Vimore.vimrc 到 ~/.vimrc（核心功能完全可用）
   --full       完整安装（默认）：复制仓库到 ~/.vim/vimore，并软链接 ~/.vimrc
   --uninstall  删除本脚本安装的 ~/.vimrc，并询问是否删除配置目录
+  --no-backup  覆盖旧配置时不生成 .bak 备份
   -h, --help   显示帮助
 EOF
 }
@@ -26,6 +28,7 @@ while [[ $# -gt 0 ]]; do
         --minimal) MODE="minimal"; shift ;;
         --full) MODE="full"; shift ;;
         --uninstall) MODE="uninstall"; shift ;;
+        --no-backup) NO_BACKUP=1; shift ;;
         -h|--help) usage; exit 0 ;;
         *) echo "未知选项: $1" >&2; usage >&2; exit 2 ;;
     esac
@@ -64,6 +67,7 @@ set_author_email() {
 }
 
 backup_rc() {
+    [[ "$NO_BACKUP" == 1 ]] && return
     if [[ -e "$RC" || -L "$RC" ]]; then
         local bak="${RC}.bak.$(date +%Y%m%d-%H%M%S)"
         mv "$RC" "$bak"
@@ -72,6 +76,7 @@ backup_rc() {
 }
 
 backup_target() {
+    [[ "$NO_BACKUP" == 1 ]] && return
     if [[ -d "$TARGET" ]]; then
         local bak="${TARGET}.bak.$(date +%Y%m%d-%H%M%S)"
         mv "$TARGET" "$bak"
@@ -80,6 +85,7 @@ backup_target() {
 }
 
 backup_plugin() {
+    [[ "$NO_BACKUP" == 1 ]] && return
     local plugin="$HOME/.vim/plugin/vimore-plugins.vim"
     if [[ -e "$plugin" || -L "$plugin" ]]; then
         local bak="${plugin}.bak.$(date +%Y%m%d-%H%M%S)"

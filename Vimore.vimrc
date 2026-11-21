@@ -2,7 +2,7 @@
 " Vimore
 " 作者: BiaoZyx
 " 邮箱: BiaoZyx@outlook.com
-" 版本: 3.33
+" 版本: 3.34
 " ============================================================
 "  _   ___
 " | | / (_)_ _  ___  _______
@@ -440,13 +440,13 @@ set ttimeoutlen=50   " 缩短按键码（如功能键、方向键）超时
 
 function! SaveAndClear() abort
     if &buftype != '' || expand('%') == ''
-        echo 'vimore: 当前 buffer 没有文件名，无法保存'
+        echo 'vimore: Current buffer has no file name'
         return
     endif
     try
         silent write
     catch
-        echo 'vimore: 保存失败: ' . v:exception
+        echo 'vimore: Save failed: ' . v:exception
         return
     endtry
     call timer_start(2000, {-> execute('echo ""')})
@@ -464,7 +464,7 @@ function! s:RunInTerminal(cmd, dir) abort
                     \ })
     catch
         close
-        echo 'vimore: 无法启动终端: ' . v:exception
+        echo 'vimore: Failed to start terminal: ' . v:exception
         return -1
     endtry
     execute 'resize ' . max([5, &lines / 3])
@@ -900,13 +900,13 @@ endfunction
 function! RunInLatestTerminal() abort
     let cmd = GetRunCommand()
     if cmd == ''
-        echo 'vimore: 不支持的文件类型: ' . &filetype
+        echo 'vimore: Unsupported filetype: ' . &filetype
         return
     endif
     try
         silent write
     catch
-        echo 'vimore: 保存失败: ' . v:exception
+        echo 'vimore: Save failed: ' . v:exception
         return
     endtry
 
@@ -1148,7 +1148,7 @@ function! StripTrailingWhitespaceManual() abort
     let view = winsaveview()
     silent! keeppatterns %s/\s\+$//e
     call winrestview(view)
-    echo 'vimore: 已清理行尾空格'
+    echo 'vimore: Trailing whitespace cleaned'
     call timer_start(2000, {-> execute('echo ""')})
 endfunction
 
@@ -1239,13 +1239,13 @@ endfunction
 " ---------- 公共小工具 ----------
 function! s:SaveFile() abort
     if &buftype != '' || expand('%') == ''
-        echo 'vimore: 当前 buffer 没有文件名'
+        echo 'vimore: Current buffer has no file name'
         return 0
     endif
     try
         silent write
     catch
-        echo 'vimore: 保存失败: ' . v:exception
+        echo 'vimore: Save failed: ' . v:exception
         return 0
     endtry
     return 1
@@ -1275,7 +1275,7 @@ func! DebugCode() abort
         " dlv debug 调试当前目录的 package，不接受单个 .go 文件
         let cmd = 'dlv debug'
     else
-        echo 'vimore: 调试不支持的文件类型: ' . ft
+        echo 'vimore: Debugging not supported for filetype: ' . ft
         return
     endif
 
@@ -1426,11 +1426,11 @@ function! s:FormatDone(bufnr, view, output, job, status) abort
 
     let text = trim(join(a:output, ''))
     if a:status != 0
-        echo 'vimore: 格式化失败: ' . (empty(text) ? 'exit ' . a:status : text)
+        echo 'vimore: Formatting failed: ' . (empty(text) ? 'exit ' . a:status : text)
     elseif !empty(text)
         echo 'vimore: ' . text
     else
-        echo 'vimore: 格式化完成'
+        echo 'vimore: Formatting complete'
     endif
 endfunction
 
@@ -1455,7 +1455,7 @@ func! FormatCode() abort
     if cmd == ''
         silent! normal! gg=G
         call winrestview(view)
-        echo 'vimore: 没有找到外部格式化工具，已用 gg=G 做基础缩进'
+        echo 'vimore: No external formatter found; did basic indent with gg=G'
         return
     endif
 
@@ -1467,7 +1467,7 @@ func! FormatCode() abort
                 \ 'exit_cb': function('s:FormatDone', [bufnr, view, output]),
                 \ })
     if job_status(job) ==# 'fail'
-        echo 'vimore: 无法启动格式化工具'
+        echo 'vimore: Failed to start formatter'
     endif
 endfunc
 
@@ -1535,11 +1535,11 @@ function! s:CheckDone(output, job, status) abort
     let text = trim(join(a:output, ''))
 
     if a:status == 0 && text == ''
-        echo 'vimore: 检查通过，没有发现问题'
+        echo 'vimore: Check passed, no issues found'
         return
     endif
     if text == ''
-        echo 'vimore: 检查失败 (exit ' . a:status . ')'
+        echo 'vimore: Check failed (exit ' . a:status . ')'
         return
     endif
 
@@ -1548,7 +1548,7 @@ function! s:CheckDone(output, job, status) abort
     try
         execute 'silent cexpr ' . string(text)
     catch
-        echo 'vimore: 检查输出无法解析: ' . v:exception
+        echo 'vimore: Check output could not be parsed: ' . v:exception
         let &errorformat = save_efm
         return
     endtry
@@ -1557,7 +1557,7 @@ function! s:CheckDone(output, job, status) abort
     if !empty(getqflist())
         copen
     endif
-    echo 'vimore: 检查发现问题，已放入 quickfix'
+    echo 'vimore: Issues found; see quickfix'
 endfunction
 
 func! CheckCode() abort
@@ -1577,7 +1577,7 @@ func! CheckCode() abort
     endfor
 
     if cmd == ''
-        echo 'vimore: 没有找到该文件类型的检查工具: ' . &filetype
+        echo 'vimore: No checker found for filetype: ' . &filetype
         return
     endif
 
@@ -1589,7 +1589,7 @@ func! CheckCode() abort
                 \ 'exit_cb': function('s:CheckDone', [output]),
                 \ })
     if job_status(job) ==# 'fail'
-        echo 'vimore: 无法启动检查工具'
+        echo 'vimore: Failed to start checker'
     endif
 endfunc
 
@@ -1831,11 +1831,11 @@ endfunction
 function! AddPair(pair)
     let map = {'(' : ')', '[' : ']', '{' : '}', '"' : '"', "'" : "'", "<" : ">"}
     if !has_key(map, a:pair)
-        echo "不支持的括号: " . a:pair
+        echo "Unsupported bracket: " . a:pair
         return
     endif
     if !get(g:, 'vimore_from_visual', 0)
-        echo "需要先在可视模式选中内容"
+        echo "Select text in Visual mode first"
         return
     endif
     let left = a:pair
@@ -1844,7 +1844,7 @@ function! AddPair(pair)
     let start_pos = getpos("'<")
     let end_pos = getpos("'>")
     if start_pos[1] == 0 || end_pos[1] == 0
-        echo "没有可视选区"
+        echo "No visual selection"
         return
     endif
 
@@ -1883,7 +1883,7 @@ endfunction
 
 function! GitAdd() abort
     if expand('%') == ''
-        echo 'vimore: 当前 buffer 没有文件名'
+        echo 'vimore: Current buffer has no file name'
         return
     endif
     execute '!git add ' . shellescape(expand('%:p'))
@@ -1926,11 +1926,11 @@ endfunction
 
 function! VimoreHealth() abort
     redraw
-    call s:HealthLine('Title', 'Vimore 自检')
+    call s:HealthLine('Title', 'Vimore health check')
     call s:HealthLine('ModeMsg', '[OK] Vim ' . v:version)
-    call s:HealthLine('ModeMsg', '[OK] 配色名: ' . get(g:, 'colors_name', '未设置'))
+    call s:HealthLine('ModeMsg', '[OK] Colorscheme: ' . get(g:, 'colors_name', 'not set'))
     call s:HealthLine('ModeMsg', '[OK] Leader: ' . string(get(g:, 'mapleader', ' ')))
-    call s:HealthLine('Directory', '[--] 开关: autochdir=' . get(g:, 'vimore_autochdir', 0)
+    call s:HealthLine('Directory', '[--] Options: autochdir=' . get(g:, 'vimore_autochdir', 0)
                 \ . ' strip_whitespace=' . get(g:, 'vimore_strip_whitespace', 1)
                 \ . ' menu_timeout=' . get(g:, 'vimore_menu_timeout', 3000))
     let fmt = []
@@ -1938,29 +1938,29 @@ function! VimoreHealth() abort
         if executable(tool) | call add(fmt, tool) | endif
     endfor
     call s:HealthLine(empty(fmt) ? 'WarningMsg' : 'ModeMsg',
-                \ (empty(fmt) ? '[WARN]' : '[OK]') . ' 格式化工具: ' . (empty(fmt) ? '未检测到' : join(fmt, ', ')))
+                \ (empty(fmt) ? '[WARN]' : '[OK]') . ' Formatters: ' . (empty(fmt) ? 'none detected' : join(fmt, ', ')))
     let chk = []
     for tool in ['luac', 'pylint', 'flake8', 'shellcheck', 'jq']
         if executable(tool) | call add(chk, tool) | endif
     endfor
     call s:HealthLine(empty(chk) ? 'WarningMsg' : 'ModeMsg',
-                \ (empty(chk) ? '[WARN]' : '[OK]') . ' 检查工具: ' . (empty(chk) ? '未检测到' : join(chk, ', ')))
+                \ (empty(chk) ? '[WARN]' : '[OK]') . ' Checkers: ' . (empty(chk) ? 'none detected' : join(chk, ', ')))
     if filereadable(s:root . '/tutor/Vimore.tutor.txt')
-        call s:HealthLine('ModeMsg', '[OK] 交互式教程存在（:VimoreTutor）')
+        call s:HealthLine('ModeMsg', '[OK] Interactive tutorial available (:VimoreTutor)')
     else
-        call s:HealthLine('WarningMsg', '[WARN] 找不到教程（单文件安装属正常）')
+        call s:HealthLine('WarningMsg', '[WARN] Tutorial not found (normal for single-file install)')
     endif
     if filereadable(s:root . '/VimMaze.vim')
-        call s:HealthLine('ModeMsg', '[OK] VimMaze 存在（:VimMaze）')
+        call s:HealthLine('ModeMsg', '[OK] VimMaze available (:VimMaze)')
     else
-        call s:HealthLine('WarningMsg', '[WARN] 找不到 VimMaze.vim')
+        call s:HealthLine('WarningMsg', '[WARN] VimMaze.vim not found')
     endif
-    call s:HealthLine('Title', '详细运行记录请用 :messages 查看')
+    call s:HealthLine('Title', 'Use :messages for full details')
 endfunction
 
 function! s:ShowKeys() abort
-    let names = {'n': '普通模式', 'x': '可视模式', 'i': '插入模式', 't': '终端模式'}
-    let lines = ['Vimore 快捷键总览', '按 q 或 Esc 关闭', '']
+    let names = {'n': 'Normal', 'x': 'Visual', 'i': 'Insert', 't': 'Terminal'}
+    let lines = ['Viore keymaps', 'Press q or Esc to close', '']
     for mode in ['n', 'x', 'i', 't']
         call add(lines, '== ' . get(names, mode, mode) . ' ==')
         let maps = []
@@ -1969,7 +1969,7 @@ function! s:ShowKeys() abort
         catch
         endtry
         if empty(maps)
-            call add(lines, '  (无)')
+            call add(lines, '  (none)')
         else
             for l in maps
                 call add(lines, '  ' . substitute(l, '^\s*', '', ''))
@@ -1990,68 +1990,68 @@ command! VimoreKeys call s:ShowKeys()
 
 let g:leader_menu = {
             \ 'w':  {
-            \ 'name': '写入',
-            \ 'w': ['保存',           function('SaveAndClear')],
-            \ 's': ['清理行尾空格',   function('StripTrailingWhitespaceManual')],
-            \ 'c': ['统计字数',       function('WordCount')],
+            \ 'name': 'Write',
+            \ 'w': ['Save',           function('SaveAndClear')],
+            \ 's': ['Strip trailing whitespace', function('StripTrailingWhitespaceManual')],
+            \ 'c': ['Word count',      function('WordCount')],
             \ },
-            \ 'q':  ['退出',              ':silent! quit<CR>'],
-            \ 'W':  ['全部保存',          ':silent! wall<CR>'],
-            \ 'Q':  ['全部退出',          ':silent! qall<CR>'],
+            \ 'q':  ['Quit',             ':silent! quit<CR>'],
+            \ 'W':  ['Save all',         ':silent! wall<CR>'],
+            \ 'Q':  ['Quit all',         ':silent! qall<CR>'],
             \ 'h':  {
-            \ 'name': '显示',
-            \ 'h': ['取消搜索高亮',   ':nohlsearch<CR>'],
-            \ 'x': ['十六进制模式',   ':%!xxd<CR>'],
-            \ 'X': ['退出十六进制',   ':%!xxd -r<CR>'],
+            \ 'name': 'Display',
+            \ 'h': ['Clear search highlight', ':nohlsearch<CR>'],
+            \ 'x': ['Hex mode',        ':%!xxd<CR>'],
+            \ 'X': ['Exit hex mode',   ':%!xxd -r<CR>'],
             \ },
-            \ 'f':  ['格式化代码',        function('FormatCode')],
+            \ 'f':  ['Format code',     function('FormatCode')],
             \ 'c':  {
-            \ 'name': '维护',
-            \ 'c': ['代码检查',       function('CheckCode')],
-            \ 'h': ['运行自检',       function('VimoreHealth')],
-            \ 'k': ['快捷键总览',     function('s:ShowKeys')],
-            \ 't': ['打开教程',       ':VimoreTutor<CR>'],
-            \ 'v': ['重新加载配置',   ':call timer_start(0, {-> execute("source $MYVIMRC")})<CR>'],
-            \ 'e': ['编辑配置',       ':e $MYVIMRC<CR>'],
+            \ 'name': 'Maintain',
+            \ 'c': ['Check code',     function('CheckCode')],
+            \ 'h': ['Run health check', function('VimoreHealth')],
+            \ 'k': ['Keymap overview', function('s:ShowKeys')],
+            \ 't': ['Open tutorial',   ':VimoreTutor<CR>'],
+            \ 'v': ['Reload config',   ':call timer_start(0, {-> execute("source $MYVIMRC")})<CR>'],
+            \ 'e': ['Edit config',     ':e $MYVIMRC<CR>'],
             \ },
-            \ '/':  ['注释/取消注释',     function('ToggleCommentSmart')],
-            \ '?':  ['打开教程',         ':VimoreTutor<CR>'],
+            \ '/':  ['Toggle comment',  function('ToggleCommentSmart')],
+            \ '?':  ['Open tutorial',   ':VimoreTutor<CR>'],
             \ 'b':  {
-            \ 'name': '括号',
+            \ 'name': 'Brackets',
             \ 'd': {
-            \ 'name': '删除指定括号对及其内容',
-            \ '(': ['圆括号',  ':execute "normal! da" . nr2char(40)<CR>'],
-            \ '[': ['方括号',  ':execute "normal! da" . nr2char(91)<CR>'],
-            \ '{': ['花括号',  ':execute "normal! da" . nr2char(123)<CR>'],
-            \ '"': ['双引号',  ':execute "normal! da" . nr2char(34)<CR>'],
-            \ "'": ['单引号',  ':execute "normal! da" . nr2char(39)<CR>'],
+            \ 'name': 'Delete pair and contents',
+            \ '(': ['Parentheses', ':execute "normal! da" . nr2char(40)<CR>'],
+            \ '[': ['Square brackets', ':execute "normal! da" . nr2char(91)<CR>'],
+            \ '{': ['Braces',    ':execute "normal! da" . nr2char(123)<CR>'],
+            \ '"': ['Double quote', ':execute "normal! da" . nr2char(34)<CR>'],
+            \ "'": ['Single quote', ':execute "normal! da" . nr2char(39)<CR>'],
             \ },
             \ 'a': {
-            \ 'name': '在可视选区外添加指定括号',
-            \ '(': ['圆括号',  ':call AddPair("(")<CR>'],
-            \ '[': ['方括号',  ':call AddPair("[")<CR>'],
-            \ '{': ['花括号',  ':call AddPair("{")<CR>'],
-            \ '"': ['双引号',  ':call AddPairCode(34)<CR>'],
-            \ "'": ['单引号',  ':call AddPairCode(39)<CR>'],
-            \ '<': ['尖括号',  ':call AddPair("<")<CR>'],
+            \ 'name': 'Wrap visual selection',
+            \ '(': ['Parentheses', ':call AddPair("(")<CR>'],
+            \ '[': ['Square brackets', ':call AddPair("[")<CR>'],
+            \ '{': ['Braces',    ':call AddPair("{")<CR>'],
+            \ '"': ['Double quote', ':call AddPairCode(34)<CR>'],
+            \ "'": ['Single quote', ':call AddPairCode(39)<CR>'],
+            \ '<': ['Angle brackets', ':call AddPair("<")<CR>'],
             \ },
             \ },
-            \ 'r':  ['查看寄存器',        ':reg<CR>'],
+            \ 'r':  ['Show registers',   ':reg<CR>'],
             \ 'z':  {
-            \ 'name': '视图',
-            \ 'z': ['全部折叠',       ':normal! zM<CR>'],
-            \ 'a': ['切换折叠',       ':normal! za<CR>'],
-            \ 'Z': ['全部展开',       ':normal! zR<CR>'],
+            \ 'name': 'View',
+            \ 'z': ['Fold all',      ':normal! zM<CR>'],
+            \ 'a': ['Toggle fold',   ':normal! za<CR>'],
+            \ 'Z': ['Unfold all',    ':normal! zR<CR>'],
             \ },
-            \ 'y':  ['复制到系统剪切板',  ':normal! "+yy<CR>'],
-            \ 'p':  ['从系统剪切板粘贴',  ':call WlClipboardPaste() | normal! "+p<CR>'],
-            \ 'P':  ['从系统剪切板粘贴(前)', ':call WlClipboardPaste() | normal! "+P<CR>'],
+            \ 'y':  ['Yank to clipboard', ':normal! "+yy<CR>'],
+            \ 'p':  ['Paste from clipboard', ':call WlClipboardPaste() | normal! "+p<CR>'],
+            \ 'P':  ['Paste from clipboard (before)', ':call WlClipboardPaste() | normal! "+P<CR>'],
             \ 's':  {
-            \ 'name': '整理',
-            \ 'd': ['删除空行',       function('s:DeleteBlankLines')],
-            \ 's': ['排序选中行',     function('s:SortLines', ['name'])],
-            \ 'u': ['去重排序',       function('s:SortLines', ['unique'])],
-            \ 'n': ['数字排序',       function('s:SortLines', ['number'])],
+            \ 'name': 'Sort / clean',
+            \ 'd': ['Delete blank lines', function('s:DeleteBlankLines')],
+            \ 's': ['Sort lines',     function('s:SortLines', ['name'])],
+            \ 'u': ['Sort unique',    function('s:SortLines', ['unique'])],
+            \ 'n': ['Sort numeric',   function('s:SortLines', ['number'])],
             \ },
             \ 'g':  {
             \ 'name': 'Git',
@@ -2064,22 +2064,22 @@ let g:leader_menu = {
             \ 'P': ['git pull',       ':!git pull<CR>'],
             \ },
             \ 't':  {
-            \ 'name': '窗口',
-            \ 't': ['底部终端',       ':call OpenTerminal("horizontal")<CR>'],
-            \ 'v': ['右侧终端',       ':call OpenTerminal("vertical")<CR>'],
-            \ 'r': ['运行当前文件',   function('RunInLatestTerminal')],
-            \ 'k': ['切换/关闭终端',  function('ToggleTerminal')],
-            \ 'n': ['新建标签',       ':tabnew<CR>'],
-            \ 'e': ['新标签编辑当前', ':tabedit %<CR>'],
-            \ 'c': ['关闭标签',       ':tabclose<CR>'],
-            \ 'o': ['保留当前标签',   ':tabonly<CR>'],
-            \ 'M': ['左移标签',       ':tabmove -1<CR>'],
-            \ 'N': ['右移标签',       ':tabmove +1<CR>'],
-            \ 'l': ['列出标签',       ':tabs<CR>'],
-            \ 'u': ['新标签打开上一个文件', ':tabnew #<CR>'],
-            \ 'd': ['新标签打开目录', ':tabnew .<CR>'],
-            \ 'f': ['文件浏览器',     ':Explore<CR>'],
-            \ 'F': ['垂直文件浏览器', ':Vexplore<CR>']
+            \ 'name': 'Window',
+            \ 't': ['Terminal (bottom)', ':call OpenTerminal("horizontal")<CR>'],
+            \ 'v': ['Terminal (right)', ':call OpenTerminal("vertical")<CR>'],
+            \ 'r': ['Run current file', function('RunInLatestTerminal')],
+            \ 'k': ['Toggle terminal', function('ToggleTerminal')],
+            \ 'n': ['New tab',        ':tabnew<CR>'],
+            \ 'e': ['Edit in new tab', ':tabedit %<CR>'],
+            \ 'c': ['Close tab',      ':tabclose<CR>'],
+            \ 'o': ['Keep only tab',  ':tabonly<CR>'],
+            \ 'M': ['Move tab left', ':tabmove -1<CR>'],
+            \ 'N': ['Move tab right', ':tabmove +1<CR>'],
+            \ 'l': ['List tabs',      ':tabs<CR>'],
+            \ 'u': ['Open alternate file in tab', ':tabnew #<CR>'],
+            \ 'd': ['Open directory in tab', ':tabnew .<CR>'],
+            \ 'f': ['File explorer',  ':Explore<CR>'],
+            \ 'F': ['Vertical file explorer', ':Vexplore<CR>']
             \ },
             \ }
 
@@ -2204,7 +2204,7 @@ function! s:LeaderPrompt(...)
     while 1
         let lines = s:RenderMenu(menu, prefix)
         if empty(lines)
-            let lines = [' (无可用命令)']
+            let lines = [' (no commands available)']
         endif
 
         let title = ' Leader ' . (prefix == '' ? '' : prefix . ' ')
@@ -2298,7 +2298,7 @@ function! s:Companion(name) abort
     if filereadable(path)
         return path
     endif
-    echo 'vimore: 找不到随附文件 ' . path . '（单文件安装属正常）'
+    echo 'vimore: Companion file not found: ' . path . ' (normal for single-file install)'
     return ''
 endfunction
 

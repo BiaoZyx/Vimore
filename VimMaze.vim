@@ -283,7 +283,7 @@ function! s:RenderMaze() abort
     call add(l:lines, '║' . join(l:row, '') . '║')
   endfor
   call add(l:lines, '╚' . repeat('═', l:cols) . '╝')
-  call add(l:lines, '  hjkl:移动 e/空格:拾取 s:保存 L:读取 r:重试 R:新游戏 q:退出 ?:帮助')
+  call add(l:lines, '  hjkl:move e/Space:pick up s:save L:load r:retry R:new q:quit ?:help')
 
   " 写入 buffer
   call setbufvar(g:vm_bufnr, '&modifiable', 1)
@@ -308,13 +308,13 @@ function! s:RenderMaze() abort
 endfunction
 
 function! s:BuildHud() abort
-  let l:lv = g:vm_level == 0 ? '无尽' : g:vm_level . '/' . g:vm_max_level
-  let l:fr = g:vm_frozen > 0 ? '  [冻结:' . g:vm_frozen . '步]' : ''
-  return '  VimMaze  第' . l:lv . '关'
-        \ . '  钥匙:' . g:vm_player.keys
-        \ . '  宝箱:' . g:vm_opened_chests . '/' . g:vm_total_chests
-        \ . '  步数:' . g:vm_steps
-        \ . '  分数:' . g:vm_score
+  let l:lv = g:vm_level == 0 ? 'Endless' : g:vm_level . '/' . g:vm_max_level
+  let l:fr = g:vm_frozen > 0 ? '  [Frozen:' . g:vm_frozen . ' turns]' : ''
+  return '  VimMaze  Level ' . l:lv
+        \ . '  Keys:' . g:vm_player.keys
+        \ . '  Chests:' . g:vm_opened_chests . '/' . g:vm_total_chests
+        \ . '  Steps:' . g:vm_steps
+        \ . '  Score:' . g:vm_score
         \ . l:fr
 endfunction
 
@@ -387,9 +387,9 @@ function! s:SaveGame() abort
     call mkdir(l:save_dir, 'p')
   endif
 
-  let l:name = input('  存档名称: ')
+  let l:name = input('  Save name: ')
   if empty(l:name)
-    echo '  已取消'
+    echo '  Cancelled'
     return
   endif
 
@@ -406,19 +406,19 @@ function! s:SaveGame() abort
         \ 'opened_chests': g:vm_opened_chests,
         \ }
   call writefile([json_encode(l:data)], l:save_file)
-  echohl VimMazeKey | echon '  已保存: ' . l:name | echohl None
+  echohl VimMazeKey | echon '  Saved: ' . l:name | echohl None
 endfunction
 
 function! s:LoadSavedGame() abort
   let l:save_dir = expand('~/.vimmaze')
   if !isdirectory(l:save_dir)
-    echohl VimMazeDoor | echon '  没有存档!' | echohl None
+    echohl VimMazeDoor | echon '  No saves!' | echohl None
     return
   endif
 
   let l:saves = split(glob(l:save_dir . '/*.dat'), "\n")
   if empty(l:saves)
-    echohl VimMazeDoor | echon '  没有存档!' | echohl None
+    echohl VimMazeDoor | echon '  No saves!' | echohl None
     return
   endif
 
@@ -427,17 +427,17 @@ function! s:LoadSavedGame() abort
   for l:s in l:saves
     call add(l:list, fnamemodify(l:s, ':t:r'))
   endfor
-  echo '  可用存档: ' . join(l:list, ', ')
+  echo '  Available saves: ' . join(l:list, ', ')
 
-  let l:name = input('  读取哪个存档? ')
+  let l:name = input('  Load which save? ')
   if empty(l:name)
-    echo '  已取消'
+    echo '  Cancelled'
     return
   endif
 
   let l:save_file = l:save_dir . '/' . l:name . '.dat'
   if !filereadable(l:save_file)
-    echohl VimMazeDoor | echon '  存档不存在: ' . l:name | echohl None
+    echohl VimMazeDoor | echon '  Save not found: ' . l:name | echohl None
     return
   endif
 
@@ -455,7 +455,7 @@ function! s:LoadSavedGame() abort
   let g:vm_game_active = 1
 
   call s:RenderMaze()
-  echohl VimMazeKey | echon '  已加载: ' . l:name | echohl None
+  echohl VimMazeKey | echon '  Loaded: ' . l:name | echohl None
 endfunction
 
 " ============================================================
@@ -500,7 +500,7 @@ function! s:Move(dir) abort
   if l:target == s:CHAR_KEY
     let g:vm_player.keys += 1
     let g:vm_maze[l:nr][l:nc] = s:CHAR_FLOOR
-    echohl VimMazeKey | echon '  获得钥匙!' | echohl None
+    echohl VimMazeKey | echon '  Got a key!' | echohl None
   endif
 
   let g:vm_player.row = l:nr
@@ -545,16 +545,16 @@ function! s:OpenChest(row, col) abort
   let l:roll = s:Rand() % 100
   if l:roll < 40
     let g:vm_score += 100
-    echohl VimMazeChest  | echon '  宝箱: +100分!' | echohl None
+    echohl VimMazeChest  | echon '  Chest: +100 points!' | echohl None
   elseif l:roll < 70
     let g:vm_player.keys += 1
-    echohl VimMazeKey    | echon '  宝箱: 获得钥匙!' | echohl None
+    echohl VimMazeKey    | echon '  Chest: got a key!' | echohl None
   elseif l:roll < 90
     let g:vm_frozen += s:FREEZE_STEPS
-    echohl VimMazeExit   | echon '  宝箱: 时间冻结! 10步免罚' | echohl None
+    echohl VimMazeExit   | echon '  Chest: time freeze! 10 free steps' | echohl None
   else
     call s:ShowPathHint()
-    echohl VimMazePath   | echon '  宝箱: 路径提示!' | echohl None
+    echohl VimMazePath   | echon '  Chest: path hint!' | echohl None
   endif
 
   call s:RenderMaze()
@@ -599,7 +599,7 @@ function! s:ShowWinAnimation() abort
     call add(l:lines, l:line)
   endfor
   call add(l:lines, '╚' . repeat('═', l:cols) . '╝')
-  call add(l:lines, '  恭喜通关! +200分  总分: ' . g:vm_score)
+  call add(l:lines, '  Level cleared! +200  Total: ' . g:vm_score)
 
   call setbufvar(g:vm_bufnr, '&modifiable', 1)
   call setbufline(g:vm_bufnr, 1, s:BuildHud())
@@ -608,7 +608,7 @@ function! s:ShowWinAnimation() abort
 
   call s:ReapplyHighlights()
   call add(s:match_ids, matchadd('VimMazeHud', '^  VimMaze.*', 2))
-  call add(s:match_ids, matchadd('VimMazeBar', '^  .*通关.*', 2))
+  call add(s:match_ids, matchadd('VimMazeBar', '^  .*cleared.*', 2))
   redraw
 endfunction
 
@@ -941,24 +941,24 @@ endfunction
 function! s:ShowHelp() abort
   echo ''
   echo '  ╔══════════════════════════════════╗'
-  echo '  ║       VimMaze 操作帮助           ║'
+  echo '  ║       VimMaze Help                 ║'
   echo '  ╠══════════════════════════════════╣'
-  echo '  ║  h/j/k/l 或 方向键  -  移动     ║'
-  echo '  ║  e / 空格           -  拾取     ║'
-  echo '  ║  r                  -  重试      ║'
-  echo '  ║  R                  -  新游戏    ║'
-  echo '  ║  s                  -  保存游戏  ║'
-  echo '  ║  L                  -  读取存档  ║'
-  echo '  ║  q                  -  退出游戏  ║'
-  echo '  ║  ?                  -  显示帮助  ║'
+  echo '  ║  h/j/k/l or arrows    -  move       ║'
+  echo '  ║  e / Space           -  pick up     ║'
+  echo '  ║  r                  -  retry       ║'
+  echo '  ║  R                  -  new game     ║'
+  echo '  ║  s                  -  save game     ║'
+  echo '  ║  L                  -  load save     ║'
+  echo '  ║  q                  -  quit game     ║'
+  echo '  ║  ?                  -  this help     ║'
   echo '  ╠══════════════════════════════════╣'
-  echo '  ║  $ = 宝箱   K = 钥匙   D = 门   ║'
-  echo '  ║  > = 出口   @ = 玩家             ║'
+  echo '  ║  $ = chest   K = key     D = door   ║'
+  echo '  ║  > = exit    @ = player             ║'
   echo '  ╠══════════════════════════════════╣'
-  echo '  ║  规则:                            ║'
-  echo '  ║  · 找到钥匙(K)开门(D)到达出口(>) ║'
-  echo '  ║  · 拾取宝箱($)获得奖励或钥匙     ║'
-  echo '  ║  · 每10步扣5分，冻结可免扣       ║'
+  echo '  ║  Rules:                             ║'
+  echo '  ║  - Find key (K), open door (D), reach exit (>) ║'
+  echo '  ║  - Pick up chests ($) for rewards/keys ║'
+  echo '  ║  - Lose 5 points every 10 steps; freeze skips it ║'
   echo '  ╚══════════════════════════════════╝'
   echo ''
 endfunction
@@ -971,7 +971,7 @@ function! s:QuitGame() abort
   endif
   call s:RestoreKeymaps()
   bwipeout!
-  echo '  游戏已退出'
+  echo '  Game exited'
 endfunction
 
 function! s:CreateGameBuffer() abort

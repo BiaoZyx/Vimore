@@ -2,6 +2,8 @@
 
 > Less is more.
 
+[English](README.en.md) | 中文
+
 一个 **Vim 原生增强基础配置**。不依赖任何插件，只靠 `.vimrc` 本身，
 把 Vim 补成一个更顺手、更现代、更「开箱即用」的编辑器。
 
@@ -99,15 +101,15 @@ ln -s ~/.vim/vimore/Vimore.vimrc ~/.vimrc
 - 在 `()` `[]` `{}` 中间回车拆三行；在数组等容器末尾回车把右括号挪到下一行
 - 两种拆分都留在插入模式，不经过 `<C-o>`
 - `:set splitright` / `splitbelow` + `updatetime=250`
-- `<Leader>tt` 底部终端
-- `<Leader>tv` 右侧终端
+- `<Leader>tt` Terminal (bottom)
+- `<Leader>tv` Terminal (right)
 - `<Leader>tr` 在最新终端运行当前文件
 - `<Leader>tk` 切换 / 关闭终端
 - 终端里 `C-\ C-n` 回普通模式
 
 ### 运行 / 格式化 / 检查
 
-- `<F5>` 运行当前文件
+- `<F5>` Run current file
 - `<F6>` 在终端里调试当前文件（pdb / gdb / dlv）
 - `<F8>` 异步代码检查，问题放进 quickfix
 - `<F9>` 基础格式化（`gg=G`）
@@ -118,7 +120,7 @@ ln -s ~/.vim/vimore/Vimore.vimrc ~/.vimrc
 按 `<Space>` 停住约 300ms，弹出 which-key 风格的提示菜单：
 
 - 顶层显示所有可用键，子菜单用 `<名字>` 标出
-- 进入子菜单后，第一行显示 `Leader c - 维护`
+- 进入子菜单后，第一行显示 `Leader c - Maintain`
 - 子菜单项不带前缀，干净利落
 - 支持「具体映射优先，没有映射才走菜单」
 

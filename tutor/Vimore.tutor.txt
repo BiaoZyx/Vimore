@@ -38,24 +38,25 @@
 
  菜单长这样，叶子在上，子菜单在下，中间空一行：
 
- /      注释/取消注释
- P      从系统剪切板粘贴(前)
- Q      全部退出
- W      全部保存
- f      格式化代码
- p      从系统剪切板粘贴
- q      退出
- r      查看寄存器
- y      复制到系统剪切板
+ /      Toggle comment
+ ?      Open tutorial
+ P      Paste from clipboard (before)
+ Q      Quit all
+ W      Save all
+ f      Format code
+ p      Paste from clipboard
+ q      Quit
+ r      Show registers
+ y      Yank to clipboard
 
- b      <括号>
- c      <维护>
+ b      <Brackets>
+ c      <Maintain>
  g      <Git>
- h      <显示>
- s      <整理>
- t      <窗口>
- w      <写入>
- z      <视图>
+ h      <Display>
+ s      <Sort / clean>
+ t      <Window>
+ w      <Write>
+ z      <View>
 
  Note: 带尖括号的是子菜单，进得去；其余的按下去就执行。按空
        格之后有 300 毫秒判断你是接着按 y / p / P 还是要开菜
@@ -68,18 +69,18 @@
 
  在菜单里再按一个键，就能进子菜单或者执行命令。
 
- 1. 按空格调出菜单，按 b，标题变成 Leader b - 括号，再按 d
-    进到第三层，标题是「删除指定括号对及其内容」。
+ 1. 按空格调出菜单，按 b，标题变成 Leader b - Brackets，再按 d
+    进到第三层，标题是「Delete pair and contents」。
  2. 按 Esc，整个菜单一次全关(Esc 不是退一层)。
 
  第二层(按 b 之后)长这样，两个都是子菜单：
 
- a      <在可视选区外添加指定括号>
- d      <删除指定括号对及其内容>
+ a      <Wrap visual selection>
+ d      <Delete pair and contents>
 
  再按 d，第三层列出五种括号(键 + 用途)：
 
- " 双引号   ' 单引号   ( 圆括号   [ 方括号   { 花括号
+ " Double quote   ' Single quote   ( Parentheses   [ Square brackets   { Braces
 
  Note: 标题里写着当前路径，看到 Leader b 就知道自己进了一层。
        按到菜单里没有的键，菜单也会直接关掉。
@@ -108,7 +109,7 @@
    SPC h x   用十六进制方式看当前文件
    SPC h X   退出十六进制显示
 
- 1. 随便改几行，按空格调出菜单，按 w 进「写入」，再按 w 保
+ 1. 随便改几行，按空格调出菜单，按 w 进"Write"，再按 w 保
    存；在插入模式里直接按 C-s 也一样能存，存完还留在插入
    模式，不会打断你继续打字。
  2. 输入 /菜单 回车找几个，按空格 h h，搜索高亮就没了。(记得
@@ -124,8 +125,8 @@
 =================================================================
 
  * SPC w 保存，SPC w s 清行尾空格，SPC w c 看光标位置信息。
- * SPC W 全部保存，SPC Q 全部退出，C-s 在哪儿都能存。
- * SPC h h 取消搜索高亮，SPC h x / X 进 / 出十六进制。
+ * SPC W Save all，SPC Q Quit all，C-s 在哪儿都能存。
+ * SPC h h Clear search highlight，SPC h x / X 进 / 出十六进制。
 
 =================================================================
 =                        3.1  系统剪切板                        =
@@ -317,11 +318,11 @@
    F4        垂直分屏开文件浏览器
    SPC t f   和 F3 一样
    SPC t F   和 F4 一样
-   SPC t n   新建标签
+   SPC t n   New tab
    SPC t e   新标签打开当前文件
    SPC t c   关闭当前标签
    SPC t o / l   只留当前标签 / 列出所有标签
-  SPC t u / d   新标签打开上一个文件 / 在新标签里打开所在目录
+  SPC t u / d   Open alternate file in tab / 在新标签里打开所在目录
    SPC t M / N   标签左移 / 右移
    Alt 左  / 右  上一个 / 下一个标签页
 
@@ -353,7 +354,7 @@
 
    SPC z z   把所有能折的都折起来
    SPC z a   在光标这行折 / 展开切换
-   SPC z Z   全部展开
+   SPC z Z   Unfold all
 
  1. 打开一个缩进过的文件，比如下面这段。
  2. 把光标放在第二行按空格 z z，整段折成一行；再按空格 z a
@@ -373,7 +374,7 @@
 =                        第8章 章节回顾                         =
 =================================================================
 
- * SPC z z 全部折叠，SPC z a 在光标处切换，SPC z Z 展开。
+ * SPC z z Fold all，SPC z a 在光标处切换，SPC z Z 展开。
  * 折叠按缩进判断，折起来那行会告诉你藏了几行。
 
 =================================================================
@@ -612,7 +613,7 @@
     C-x       可视模式里把选区剪进系统剪贴板
     F1        帮助
     F2        普通/插入模式切粘贴模式
-    F3/F4     文件浏览器（当前窗口 / 垂直分屏）
+    F3/F4     File explorer（当前窗口 / 垂直分屏）
     F5        在终端里运行当前文件
     F6        在终端里调试当前文件
     F7        切换当前窗口的自动换行，并显示 wrap 状态
@@ -777,12 +778,12 @@
  Vimore 菜单把这些都收在 SPC t 下：
 
     SPC t n / e / c / o   新建 / 新标签编辑 / 关闭 / 只留当前
-    SPC t M / N           左移 / 右移标签
-    SPC t l               列出标签
+    SPC t M / N           左移 / Move tab right
+    SPC t l               List tabs
     SPC t u               在新标签里打开「上一个文件」
     SPC t d               新标签打开当前目录
 
-  1. 按 SPC t n 新建标签，再按 Alt-右 / Alt-左 来回切。
+  1. 按 SPC t n New tab，再按 Alt-右 / Alt-左 来回切。
   2. 按 SPC t M 把标签往左挪一位，看顶部标签栏的变化。
   3. 输入 :tabs 看列表，最后按 SPC t o 只留当前。
 
@@ -962,13 +963,13 @@
 
     zf        创建折叠        zo        打开一处折叠
     zc        关闭一处折叠    za        开关切换
-    zM        全部折起        zR        全部展开
+    zM        全部折起        zR        Unfold all
     zj / zk   跳到下 / 上一个折叠
     SPC z z / a / Z   Vimore 菜单里的全折 / 切换 / 全展开
 
   1. 打开一个有缩进的代码文件，按 zM 全折。
   2. 按 zj 在折叠之间跳，按 zo 展开当前一处。
-  3. 按 zR 全部展开。
+  3. 按 zR Unfold all。
 
  Note: 折叠按缩进判断（foldmethod=indent），所以没缩进的文件
        折不起来；折起来那行会显示 + 开头内容和 ... N lines。

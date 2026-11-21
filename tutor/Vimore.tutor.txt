@@ -40,11 +40,11 @@
 
  /      Toggle comment
  ?      Open tutorial
- P      Paste from clipboard (before)
+ P      Paste before
  Q      Quit all
  W      Save all
  f      Format code
- p      Paste from clipboard
+ p      Paste after
  q      Quit
  r      Show registers
  y      Yank to clipboard

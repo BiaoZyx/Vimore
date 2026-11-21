@@ -70,15 +70,16 @@
  在菜单里再按一个键，就能进子菜单或者执行命令。
 
  1. 按空格调出菜单，按 b，标题变成 Leader b - Brackets，再按 d
-    进到第三层，标题是「Delete pair and contents」。
+    进到第三层，标题是「Delete surrounding symbols only」。
  2. 按 Esc，整个菜单一次全关(Esc 不是退一层)。
 
- 第二层(按 b 之后)长这样，两个都是子菜单：
+ 第二层(按 b 之后)长这样，三个都是子菜单：
 
  a      <Wrap visual selection>
- d      <Delete pair and contents>
+ c      <Change surrounding symbols>
+ d      <Delete surrounding symbols only>
 
- 再按 d，第三层列出五种括号(键 + 用途)：
+ 再按 d，第三层列出五种包裹符号(键 + 用途)：
 
  " Double quote   ' Single quote   ( Parentheses   [ Square brackets   { Braces
 
@@ -239,25 +240,27 @@
 =                      5.2  删括号与加括号                      =
 =================================================================
 
- SPC b d 之后选括号类型，就把光标所在的那一对括号连里面的东西
- 一起删掉；SPC b a 是反过来，给选区外面套一对括号。
+ SPC b d 只删光标所在那一层包裹符号，内容保留；SPC b c 换成
+ 别的符号；SPC b a 给选区外面套一对括号。连内容一起删用 Vim
+ 自带的 da( / da" / da{。
 
-   SPC b d ( [ { " '    删掉光标所在的那对括号和内容
-   SPC b a ( [ { " '    给可视选区外面套一对括号
+   SPC b d ( [ { " '    只删包裹符号，保留内容
+   SPC b c ( [ { " ' <  把当前包裹符号换成指定的一种
+   SPC b a ( [ { " ' <  给可视选区外面套一对括号
 
- 1. 把光标放进下面标有 '-->' 行的 (baz) 里，停在 b 和 a 之
-    间，按空格 b d (，第二行是删完的样子。
+ 1. 把光标放进下面标有 '-->' 行的双引号里，按空格 b d "，
+    只删掉两个引号，内容保留：
 
- --> call foo(bar(baz), 42)
-     call foo(bar, 42)
+ --> foo("bar")
+     foo(bar)
 
- 2. 按 u 退回去，把光标放进 { key: val } 里，按空格 b d {：
+ 2. 按 u 退回，再按空格 b c '，把当前包裹符号换成单引号：
 
- --> if ok { key: val }
-     if ok
+ --> foo("bar")
+     foo('bar')
 
- 3. 按 u 退回去，按 V 选中整行，按空格 b a (，整行被套上括
-    号，第二行是加完的样子。
+ 3. 按 V 选中整行，按空格 b a (，整行被套上括号，第二行是加
+    完的样子。
 
  --> print(sum(a, b))
      (print(sum(a, b)))
@@ -819,8 +822,8 @@
 
       second paragraph here
 
- Note: i 是 inside，a 是 around。Vimore 菜单里的 SPC b d
-      用的就是 da( / da" 这类动作，删掉整个包裹符号。
+ Note: i 是 inside，a 是 around。Vimore 的 SPC b d 只删
+      包裹符号；要连内容一起删用 Vim 自带的 da( / da"。
 
 =================================================================
 =                       第21章 章节回顾                          =
@@ -828,7 +831,7 @@
 
  * iw/aw、i"/a"、i(/a(、ip/ap 是高频文本对象。
  * d/c/y + 文本对象比手动数 h/l 精确得多。
- * SPC b d 内部就是 da( 这一类动作。
+ * SPC b d 只删符号，SPC b c 换符号；连内容删用 da(。
 
 =================================================================
 =                      22.1  可视模式进阶                        =
@@ -1027,8 +1030,8 @@
  * SPC w / W / Q 管保存退出，C-s 在哪儿都能存；SPC y / p /
    P 走系统剪贴板，普通 yy 只在 Vim 内部。
  * SPC / 快速注释，注释符按文件类型自动挑。
- * SPC b d 删括号和内容，SPC b a 给选区加括号；插入模式自
-   动补全括号引号，退格成对删除。
+ * SPC b d 只删包裹符号，SPC b c 换符号，SPC b a 加括号；
+   插入模式自动补全括号引号，退格成对删除。
  * SPC t t / v / k / r 管终端，F5 跑、F6 调试，F3 / F4 浏览。
  * SPC z 折叠，SPC s 排序，SPC g 是 Git，SPC c 管配置。
  * < 和 > 保持 Vim 默认（单按缩进当前行），行号、状态栏、

@@ -42,14 +42,27 @@ call s:Check('Go 头 Doxygen 字段', search('// @file    x.go', 'nw') > 0, 1)
 bwipeout!
 execute 'edit ' . fnameescape(s:tmp . '/x.cc')
 call s:Check('cc 文件头', getline(1), '/**')
+call s:Check('cc 头 Doxygen 字段', search(' \* @date    ', 'nw') > 0, 1)
 " 容器末尾回车：右括号换行
 enew!
 call setline(1, 'local xs = [1, 2, 3]')
 call cursor(1, 20)
 call s:Check('容器拆分返回值', SplitContainerEnd(), 1)
-call s:Check('容器拆分右括号', getline(3), ']')
+call s:Check('容器拆分第一项', getline(2), '    1,')
+call s:Check('容器拆分第二项', getline(3), '    2,')
+call s:Check('容器拆分第三项', getline(4), '    3,')
+call s:Check('容器拆分右括号', getline(5), ']')
+" 只删包裹符号 / 换包裹符号
+enew!
+call setline(1, 'foo("bar")')
+call cursor(1, 6)
+call s:Check('删除双引号', DeleteSurround('"'), 1)
+call s:Check('删除后保留内容', getline(1), 'foo(bar)')
+call setline(1, 'foo((bar))')
+call cursor(1, 6)
+call s:Check('更换包裹符号', ChangeSurroundTo('"'), 1)
+call s:Check('更换后保留内容', getline(1), 'foo("bar")')
 bwipeout!
-call s:Check('cc 头 Doxygen 字段', search(' \* @date    ', 'nw') > 0, 1)
 bwipeout!
 execute 'edit ' . fnameescape(s:tmp . '/x.bash')
 call s:Check('bash 文件头', getline(1), '#!/usr/bin/env bash')

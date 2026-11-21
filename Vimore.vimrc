@@ -2,7 +2,7 @@
 " Vimore
 " 作者: BiaoZyx
 " 邮箱: BiaoZyx@outlook.com
-" 版本: 3.36
+" 版本: 3.37
 " ============================================================
 "  _   ___
 " | | / (_)_ _  ___  _______
@@ -224,6 +224,7 @@ call s:Hl('Special', 'cyan', '', 'NONE')
 call s:Hl('SpecialChar', 'cyan', '', 'NONE')
 call s:Hl('Tag', 'red', '', 'NONE')
 call s:Hl('Delimiter', 'punct', '', 'NONE')
+call s:Hl('Operator', 'blue', '', 'NONE')
 call s:Hl('SpecialComment', 'cyan', '', 'italic')
 call s:Hl('Debug', 'red', '', 'NONE')
 call s:Hl('Underlined', 'blue', '', 'underline')
@@ -964,6 +965,7 @@ set wildignore+=node_modules,__pycache__,*.git,*.svn
 set wildignore+=*.o,*.a,*.obj,*.class
 
 inoremap <silent><expr> <TAB> pumvisible() ? "\<C-n>" : "\<TAB>"
+inoremap <silent> <C-Space> <C-x><C-o>
 inoremap <silent><expr> <S-TAB> pumvisible() ? "\<C-p>" : "\<S-TAB>"
 
 " <CR> 智能拆分
@@ -1061,7 +1063,34 @@ function! SplitPair() abort
     call cursor(lnum + 1, len(line2) + 1)
 endfunction
 
-" 容器末尾回车：右括号挪到下一行，内容单独占一行
+" 按顶层逗号切分内容，忽略嵌套括号和字符串里的逗号
+function! s:SplitItems(inner) abort
+    let items = []
+    let start = 0
+    let depth = 0
+    let quote = ''
+    for i in range(0, len(a:inner) - 1)
+        let ch = a:inner[i]
+        if quote !=# ''
+            if ch ==# quote && (i == 0 || a:inner[i-1] !=# '\')
+                let quote = ''
+            endif
+        elseif ch ==# '"' || ch ==# "'" || ch ==# '`'
+            let quote = ch
+        elseif ch ==# '(' || ch ==# '[' || ch ==# '{'
+            let depth += 1
+        elseif ch ==# ')' || ch ==# ']' || ch ==# '}'
+            let depth -= 1
+        elseif ch ==# ',' && depth == 0
+            call add(items, substitute(strpart(a:inner, start, i - start), '^\s*\(.\{-}\)\s*$', '\1', ''))
+            let start = i + 1
+        endif
+    endfor
+    call add(items, substitute(strpart(a:inner, start), '^\s*\(.\{-}\)\s*$', '\1', ''))
+    return items
+endfunction
+
+" 容器末尾回车：右括号挪到下一行；多个顶层项目时每项一行并补逗号
 function! SplitContainerEnd() abort
     let lnum = line('.')
     let line = getline(lnum)
@@ -1071,15 +1100,28 @@ function! SplitContainerEnd() abort
         return 0
     endif
 
-    let inner = substitute(found[1], '^\s*\(.\{-}\)\s*$', '\1', '')
     let indent = matchstr(line, '^\s*')
-    let middle = indent . s:IndentStep() . inner
+    let step = s:IndentStep()
     let last = indent . strpart(line, col)
+    let items = s:SplitItems(found[1])
 
     call setline(lnum, strpart(line, 0, found[0] + 1))
-    call append(lnum, middle)
-    call append(lnum + 1, last)
-    call cursor(lnum + 1, len(middle) + 1)
+    if len(items) > 1
+        let body = []
+        for item in items
+            if item !=# ''
+                call add(body, indent . step . item . ',')
+            endif
+        endfor
+        call append(lnum, body)
+        call append(lnum + len(body), last)
+        call cursor(lnum + 1, len(body[0]) + 1)
+    else
+        let middle = indent . step . get(items, 0, '')
+        call append(lnum, middle)
+        call append(lnum + 1, last)
+        call cursor(lnum + 1, len(middle) + 1)
+    endif
     return 1
 endfunction
 
@@ -1199,6 +1241,7 @@ nnoremap <silent> <A-Right> <Cmd>tabnext<CR>
 
 " 全选复制
 vnoremap <C-x> "+x
+xnoremap <silent> p pgvy
 
 " ============================================================
 " 17. F 键快捷键
@@ -1881,6 +1924,86 @@ function! GitCommit() abort
     execute '!git commit -m ' . shellescape(l:msg)
 endfunction
 
+let s:pair_map = {'(': ')', '[': ']', '{': '}', '"': '"', "'": "'", '<': '>'}
+
+function! s:FindSurround(char) abort
+    let line = getline('.')
+    let col = col('.') - 1
+    let close = get(s:pair_map, a:char, '')
+    if close ==# ''
+        return []
+    endif
+    let op = -1
+    let i = min([col + 1, len(line)])
+    while i > 0
+        let i -= 1
+        if line[i] ==# a:char && (i == 0 || line[i-1] !=# '\')
+            let op = i
+            break
+        endif
+    endwhile
+    let cl = -1
+    let j = max([col + 1, 0])
+    while j < len(line)
+        if line[j] ==# close && (j == 0 || line[j-1] !=# '\')
+            let cl = j
+            break
+        endif
+        let j += 1
+    endwhile
+    if op < 0 || cl < 0 || op >= cl
+        return []
+    endif
+    return [op, cl]
+endfunction
+
+" 只删包裹符号，保留内容（daX 用来连内容一起删）
+function! DeleteSurround(char) abort
+    let pos = s:FindSurround(a:char)
+    if empty(pos)
+        echo 'vimore: No surrounding ' . a:char
+        return 0
+    endif
+    let line = getline('.')
+    call setline('.', strpart(line, 0, pos[1]) . strpart(line, pos[1]+1))
+    let line = getline('.')
+    call setline('.', strpart(line, 0, pos[0]) . strpart(line, pos[0]+1))
+    return 1
+endfunction
+
+function! DeleteSurroundCode(code) abort
+    return DeleteSurround(nr2char(a:code))
+endfunction
+
+" 把当前包裹符号换成另一种，保留内容
+function! ChangeSurroundTo(newchar) abort
+    let close = get(s:pair_map, a:newchar, '')
+    if close ==# ''
+        return 0
+    endif
+    for ch in ['(', '[', '{', '"', "'", '<']
+        let pos = s:FindSurround(ch)
+        if !empty(pos)
+            let line = getline('.')
+            call setline('.', strpart(line, 0, pos[1]) . strpart(line, pos[1]+1))
+            let line = getline('.')
+            call setline('.', strpart(line, 0, pos[0]) . strpart(line, pos[0]+1))
+            let line = getline('.')
+            let clp = pos[1] - 1
+            call setline('.', strpart(line, 0, clp) . close . strpart(line, clp))
+            let line = getline('.')
+            call setline('.', strpart(line, 0, pos[0]) . a:newchar . strpart(line, pos[0]))
+            return 1
+        endif
+    endfor
+    echo 'vimore: No surrounding pair'
+    return 0
+endfunction
+
+function! ChangeSurroundCode(code) abort
+    return ChangeSurroundTo(nr2char(a:code))
+endfunction
+
 function! GitAdd() abort
     if expand('%') == ''
         echo 'vimore: Current buffer has no file name'
@@ -1988,6 +2111,19 @@ endfunction
 command! VimoreHealth call VimoreHealth()
 command! VimoreKeys call s:ShowKeys()
 
+function! s:FindFile() abort
+    let files = split(glob('**/*', 1), "\n")
+    if !empty(files)
+        let pick = inputlist(['Open file:'] + map(copy(files), 'v:val'))
+        if pick > 0 && pick <= len(files)
+            execute 'edit ' . fnameescape(files[pick - 1])
+            return
+        endif
+    endif
+    " 没结果或用户取消时回退到文件浏览器
+    Explore
+endfunction
+
 let g:leader_menu = {
             \ 'w':  {
             \ 'name': 'Write',
@@ -2016,15 +2152,25 @@ let g:leader_menu = {
             \ },
             \ '/':  ['Toggle comment',  function('ToggleCommentSmart')],
             \ '?':  ['Open tutorial',   ':VimoreTutor<CR>'],
+            \ 'F':  ['Find file',       function('s:FindFile')],
             \ 'b':  {
             \ 'name': 'Brackets',
             \ 'd': {
-            \ 'name': 'Delete pair and contents',
-            \ '(': ['Parentheses', ':execute "normal! da" . nr2char(40)<CR>'],
-            \ '[': ['Square brackets', ':execute "normal! da" . nr2char(91)<CR>'],
-            \ '{': ['Braces',    ':execute "normal! da" . nr2char(123)<CR>'],
-            \ '"': ['Double quote', ':execute "normal! da" . nr2char(34)<CR>'],
-            \ "'": ['Single quote', ':execute "normal! da" . nr2char(39)<CR>'],
+            \ 'name': 'Delete surrounding symbols only',
+            \ '(': ['Parentheses', ':call DeleteSurround("(")<CR>'],
+            \ '[': ['Square brackets', ':call DeleteSurround("[")<CR>'],
+            \ '{': ['Braces',    ':call DeleteSurround("{")<CR>'],
+            \ '"': ['Double quote', ':call DeleteSurroundCode(34)<CR>'],
+            \ "'": ['Single quote', ':call DeleteSurroundCode(39)<CR>'],
+            \ },
+            \ 'c': {
+            \ 'name': 'Change surrounding symbols',
+            \ '(': ['To parentheses', ':call ChangeSurroundTo("(")<CR>'],
+            \ '[': ['To square brackets', ':call ChangeSurroundTo("[")<CR>'],
+            \ '{': ['To braces',    ':call ChangeSurroundTo("{")<CR>'],
+            \ '"': ['To double quote', ':call ChangeSurroundCode(34)<CR>'],
+            \ "'": ['To single quote', ':call ChangeSurroundCode(39)<CR>'],
+            \ '<': ['To angle brackets', ':call ChangeSurroundCode(60)<CR>'],
             \ },
             \ 'a': {
             \ 'name': 'Wrap visual selection',

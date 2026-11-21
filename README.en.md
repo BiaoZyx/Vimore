@@ -51,10 +51,15 @@ external formatters/checkers for F8/F10.
 | `F7` | Toggle line wrap (current window) |
 | `F8` / `F10` | Async code check / format |
 | `F9` | Basic indent (`gg=G`) |
+| `<C-Space>` | Manually open completion |
+| `SPC F` | Find file (falls back to netrw) |
 
 Inside the menu: `SPC w` Write, `SPC c` Maintain, `SPC b` Brackets,
 `SPC s` Sort / clean, `SPC t` Window, `SPC z` View, `SPC g` Git, `SPC l` LSP
-(NeoVimore only), `SPC /` toggle comment, `SPC ?` tutorial.
+(NeoVimore only), `SPC /` toggle comment, `SPC ?` tutorial, `SPC F` find file.
+`SPC b d` removes only the surrounding symbols, `SPC b c` changes them;
+use `daX` to delete a pair together with its contents. Visual `p` keeps the
+unnamed register. Operators (including C pointers `*`) are blue.
 
 Bracket handling:
 - Empty `()` `[]` `{}`: Enter splits into three lines, cursor stays in Insert.

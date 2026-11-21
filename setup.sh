@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Vimore installer.
+# Vimore 安装脚本。
 set -Eeuo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -58,10 +58,10 @@ read_user_info() {
     fi
 }
 
-# Escape a value for a sed replacement using '|' as delimiter: \ & and |
+# sed 替换串转义：用 | 作分隔符，需要转义 \ & 和 |
 sed_escape() { printf '%s' "$1" | sed -e 's/[\\&|]/\\&/g' | tr -d '\n\r'; }
 
-# Vim single-quoted strings represent a quote by doubling it.
+# Vim 单引号字符串里用两个单引号表示一个引号。
 vim_quote() { sed_escape "$(printf '%s' "$1" | sed "s/'/''/g")"; }
 
 set_author_email() {
@@ -136,7 +136,7 @@ case "$MODE" in
         set_author_email "$TARGET/Vimore.vimrc"
         log "copied config to $TARGET"
 
-        # Install the optional LSP snippet under a distinct name.
+        # 可选 LSP 片段用独立文件名，避免覆盖用户自己的 plugins.vim
         if [[ -f "$ROOT/.vim/plugin/plugins.vim" ]]; then
             mkdir -p "$HOME/.vim/plugin"
             backup_plugin

@@ -300,8 +300,8 @@ function! s:RenderMaze() abort
   call s:ReapplyHighlights()
 
   " 顶栏和底栏高亮
-  call add(s:match_ids, matchadd('VimMazeHud', '^  VimMaze.*', 2))
-  call add(s:match_ids, matchadd('VimMazeBar', '^  hjkl:.*', 2))
+  call matchadd('VimMazeHud', '^  VimMaze.*', 2)
+  call matchadd('VimMazeBar', '^  hjkl:.*', 2)
 
   redraw
   echo ''
@@ -607,8 +607,8 @@ function! s:ShowWinAnimation() abort
   call setbufvar(g:vm_bufnr, '&modifiable', 0)
 
   call s:ReapplyHighlights()
-  call add(s:match_ids, matchadd('VimMazeHud', '^  VimMaze.*', 2))
-  call add(s:match_ids, matchadd('VimMazeBar', '^  .*cleared.*', 2))
+  call matchadd('VimMazeHud', '^  VimMaze.*', 2)
+  call matchadd('VimMazeBar', '^  .*cleared.*', 2)
   redraw
 endfunction
 
@@ -715,7 +715,6 @@ function! s:LoadLevel(level_num) abort
     endfor
   endfor
 
-  let g:vm_maze_original = copy(l:raw)
   let g:vm_level = a:level_num
   let g:vm_steps = 0
   let g:vm_frozen = 0
@@ -723,6 +722,11 @@ function! s:LoadLevel(level_num) abort
 
   call s:ClearPathHint(-1)
   call s:RenderMaze()
+endfunction
+
+function! s:RestartLevel() abort
+  call s:ClearPathHint(-1)
+  call s:StartEndless()
 endfunction
 
 function! s:StartEndless() abort
@@ -940,26 +944,26 @@ endfunction
 " ============================================================
 function! s:ShowHelp() abort
   echo ''
-  echo '  ╔══════════════════════════════════╗'
-  echo '  ║       VimMaze Help                 ║'
-  echo '  ╠══════════════════════════════════╣'
-  echo '  ║  h/j/k/l or arrows    -  move       ║'
-  echo '  ║  e / Space           -  pick up     ║'
-  echo '  ║  r                  -  retry       ║'
-  echo '  ║  R                  -  new game     ║'
-  echo '  ║  s                  -  save game     ║'
-  echo '  ║  L                  -  load save     ║'
-  echo '  ║  q                  -  quit game     ║'
-  echo '  ║  ?                  -  this help     ║'
-  echo '  ╠══════════════════════════════════╣'
-  echo '  ║  $ = chest   K = key     D = door   ║'
-  echo '  ║  > = exit    @ = player             ║'
-  echo '  ╠══════════════════════════════════╣'
-  echo '  ║  Rules:                             ║'
-  echo '  ║  - Find key (K), open door (D), reach exit (>) ║'
-  echo '  ║  - Pick up chests ($) for rewards/keys ║'
+  echo '  ╔══════════════════════════════════════════════════╗'
+  echo '  ║                   VimMaze Help                   ║'
+  echo '  ╠══════════════════════════════════════════════════╣'
+  echo '  ║  h/j/k/l or arrows    -  move                    ║'
+  echo '  ║  e / Space            -  pick up                 ║'
+  echo '  ║  r                    -  retry                   ║'
+  echo '  ║  R                    -  new game                ║'
+  echo '  ║  s                    -  save game               ║'
+  echo '  ║  L                    -  load save               ║'
+  echo '  ║  q                    -  quit game               ║'
+  echo '  ║  ?                    -  this help               ║'
+  echo '  ╠══════════════════════════════════════════════════╣'
+  echo '  ║  $ = chest   K = key     D = door    > = exit    ║'
+  echo '  ║  @ = player                                      ║'
+  echo '  ╠══════════════════════════════════════════════════╣'
+  echo '  ║  Rules:                                          ║'
+  echo '  ║  - Find key (K), open door (D), reach exit (>)   ║'
+  echo '  ║  - Pick up chests ($) for rewards/keys           ║'
   echo '  ║  - Lose 5 points every 10 steps; freeze skips it ║'
-  echo '  ╚══════════════════════════════════╝'
+  echo '  ╚══════════════════════════════════════════════════╝'
   echo ''
 endfunction
 
@@ -1002,7 +1006,7 @@ function! VimMaze#Start() abort
   call s:SetupHighlights()
   call s:CreateGameBuffer()
   call s:SetupKeymaps()
-  call s:LoadLevel(1)
+  call s:StartEndless()
 endfunction
 
 command! VimMaze call VimMaze#Start()

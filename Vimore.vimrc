@@ -2,7 +2,7 @@
 " Vimore
 " 作者: BiaoZyx
 " 邮箱: BiaoZyx@outlook.com
-" 版本: 3.41
+" 版本: 3.42
 " ============================================================
 "  _   ___
 " | | / (_)_ _  ___  _______
@@ -224,7 +224,6 @@ call s:Hl('Special', 'cyan', '', 'NONE')
 call s:Hl('SpecialChar', 'cyan', '', 'NONE')
 call s:Hl('Tag', 'red', '', 'NONE')
 call s:Hl('Delimiter', 'punct', '', 'NONE')
-call s:Hl('Operator', 'blue', '', 'NONE')
 call s:Hl('SpecialComment', 'cyan', '', 'italic')
 call s:Hl('Debug', 'red', '', 'NONE')
 call s:Hl('Underlined', 'blue', '', 'underline')

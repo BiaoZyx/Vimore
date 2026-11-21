@@ -63,7 +63,8 @@ Inside the menu: `SPC w` Write, `SPC c` Maintain, `SPC b` Brackets,
 (NeoVimore only), `SPC /` toggle comment, `SPC ?` tutorial, `SPC F` find file.
 `SPC b d` removes only the surrounding symbols, `SPC b c` changes them;
 use `daX` to delete a pair together with its contents. Visual `p` keeps the
-unnamed register. Operators (including C pointers `*`) are blue.
+unnamed register. Operators keep the normal text color; NeoVimore additionally
+colors C pointers `*` blue.
 
 Bracket handling:
 - Empty `()` `[]` `{}`: Enter splits into three lines, cursor stays in Insert.

@@ -100,7 +100,7 @@ ln -s ~/.vim/vimore/Vimore.vimrc ~/.vimrc
 - 增量搜索、智能大小写、高亮结果
 - `<C-x><C-o>` 手动补全（避开输入法占用的 `C-Space`）；可视模式 `p` 粘贴不会吞掉寄存器
 - `SPC F` 轻量文件搜索（无结果时回退到 netrw）
-- C 语言的指针 `*` 等操作符统一用蓝色（Operator）
+- 普通运算符保持正文颜色（NeoVim 版会把 C 指针 `*` 单独染蓝）
 - `<Leader>hh` 取消高亮
 
 ### 终端

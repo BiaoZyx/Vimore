@@ -9,7 +9,7 @@
 |                                                               |
 |                        Less is more.                          |
 |                                                               |
-|              28 章 · 交互式教程 · 按 j 往下读                 |
+|              32 章 · 交互式教程 · 按 j 往下读                 |
 |                                                               |
 +---------------------------------------------------------------+
 
@@ -1019,8 +1019,157 @@
  * 三个 g:vimore_* 开关控制自动 cd、清空格和菜单超时。
  * :VimoreMenu / :VimoreTutor / :VimMaze 是三个独立入口。
 
+=                      28.1  IDE 体验：内置 LSP                      =
+
+
+Vim 版本身不带 LSP；可选安装 yegappan/lsp 插件来获得跳转、补全和诊断。
+
+    gd / gD     跳定义 / 声明
+    gr / gi     查找引用 / 跳实现
+    K           悬停文档
+    <C-k>       签名帮助
+    SPC l       打开 LSP 子菜单（诊断、符号、格式化等）
+    <C-x><C-o>   手动触发补全（不要用 C-Space，输入法会占用）
+
+  1. 打开一个 Python 或 C 文件，把光标放到函数名上按 gd。
+  2. 按 K 看文档；按 gr 看所有引用。
+  3. 输入 :VimoreHealth 或 :messages，看插件和工具是否就绪。
+
+ Vim 版没有 inlay hints / Code Lens / 语义 token；这些是 NeoVim 专属。
+ 但 gd/gr/K 等键位在装了可选 LSP 插件后保持一致。
+
+ Note: 没有装对应语言服务器时，这些功能自动跳过，不报错。
+       可选 LSP 片段在 ~/.vim/plugin/vimore-plugins.vim。
+
 =================================================================
-=                           28.1  完                            =
+=                       第28章 章节回顾                          =
+=================================================================
+
+ * gd/gD/gr/gi/K 是 LSP 五件套；SPC l 是完整 LSP 菜单。
+ * Vim 版不提供 inlay hints / Code Lens / 语义 token。
+ * :VioreHealth 显示工具和随附文件状态。
+
+=                        29.1  语义高亮、配色与颜色                       =
+
+主题写死在 Vimore.vimrc 第 3 节，没有 colors/ 目录；单文件就是完全体。
+真彩终端用 hex，其它终端自动折算成 256 色。
+
+    紫色    关键字 / 语句
+    蓝色    函数名、C 指针 *（单独高亮）
+    橙色    运算符（= < + 等），包括声明初始化里的 =
+    绿色    字符串
+    黄色    类型、数字
+    淡灰    注释、行尾空格的 ·
+    红色    错误 / 删除
+
+ 1. 打开一个 C 文件，观察 void swap(int *x, int *y)：
+    参数名是正文色，* 是蓝色，= 是橙色。
+ 2. 输入 :echo g:colors_name 和 :highlight Operator 看颜色。
+
+ Note: 颜色只负责「区分语义」，不表示严重程度；错误才用红色。
+       运算符统一橙色，指针单独蓝色，都是为了颜色一致性。
+
+=================================================================
+=                       第29章 章节回顾                          =
+=================================================================
+
+ * 配色内联在 Vimore.vimrc，真彩/256 色都支持。
+ * 运算符橙、指针蓝、关键字紫、字符串绿、类型黄。
+ * Lua/semantic token 是 NeoVim 专属；Vim 用传统语法高亮。
+
+=                         30.1  格式化与缩进规范                        =
+
+ F10 / SPC f 调用外部格式化工具，在后台运行，跑完自动重读文件。
+
+    语言        工具
+    Python      black / ruff / autopep8
+    Go          gofmt
+    JS / TS     prettier
+    C / C++     clang-format（强制 4 格缩进）
+    Lua         stylua
+    Shell       shfmt
+
+ 缩进按语言分配，不搞一刀切：
+
+    2 格    YAML JSON HTML CSS JS TS Vue Svelte Ruby Markdown
+           Shell Terraform GraphQL
+    4 格    Python C C++ Java Rust Lua Zig PHP C# Kotlin SQL Vim
+    tab     Go（显示宽度 4）、Makefile（显示宽度 8）
+    6 格    不作为基础宽度，只用于续行/对齐
+
+ 1. 打开一个 2 格缩进的 C 文件，按 F10，看是否变成 4 格。
+ 2. 新建 .json 和 .py 文件，各敲一行，看 :set shiftwidth? 的差别。
+ 3. 新建 Makefile，确认 Tab 字符真的写进文件（Makefile 语法要求）。
+
+ Note: 括号拆分会尊重 noexpandtab：Go 文件补 Tab，不塞空格。
+
+=================================================================
+=                       第30章 章节回顾                          =
+=================================================================
+
+ * F10 / SPC f 异步格式化，clang-format 强制 4 格。
+ * 2/4/tab/8 按语言分配，6 格只用于续行。
+ * 拆分括号尊重 noexpandtab。
+
+=                         31.1  安装、升级与目录                        =
+
+仓库根目录的 setup.sh 负责安装，纯 POSIX sh，可用 dash / ash / busybox 跑。
+
+    ./setup.sh            完整安装到 ~/.vim/vimore + ~/.vimrc 软链接
+    ./setup.sh --minimal  只复制 Vimore.vimrc 到 ~/.vimrc
+    ./setup.sh --uninstall
+    ./setup.sh --no-backup   覆盖时不生成 .bak
+    ./setup.sh -y         跳过询问（用 VIMORE_AUTHOR / VIMORE_EMAIL）
+    ./setup.sh --version  显示版本
+    ./setup.sh --help     帮助
+
+ 1. 输入 ./setup.sh --version 看当前版本。
+    单文件安装也能用：cp Vimore.vimrc ~/.vimrc。
+ 2. 输入 ./setup.sh --help 看全部选项。
+ 3. 设置 VIMORE_AUTHOR / VIMORE_EMAIL 后重新安装，
+    新文件头的作者/邮箱会自动更新。
+
+ Note: 这类配置直接克隆也能用，不必每次小改动都打 tag；
+       版本号主要用于区分大版本。
+
+=================================================================
+=                       第31章 章节回顾                          =
+=================================================================
+
+ * setup.sh 是 POSIX sh，支持 full/minimal/uninstall。
+ * 作者/邮箱可交互输入，也可用环境变量。
+ * 小改动直接 commit/push，不必频繁 tag。
+
+=                      32.1  综合练习：整理一个排序程序                      =
+
+把这一章当成结业练习：打开一个空 C 文件，从头写出并整理下面这段。
+
+    #include <stdio.h>
+
+    void swap(int *x, int *y) {
+      int tmp = *x;
+      *x = *y;
+      *y = tmp;
+    }
+
+ 1. 用 SPC b d 只删掉一对括号，再用 SPC b c 换成别的符号，最后 u 撤销。
+ 2. 用 da( 连内容一起删一对括号，体会它和 SPC b d 的区别。
+ 3. 按 F10，确认 clang-format 把 2 格改成 4 格，= 是橙色，* 是蓝色。
+ 4. 用 gd / gr / K 体验 LSP；用 ]d / [d 在诊断间跳。
+ 5. 输入 :g/^$/d 删掉所有空行；:%s/int /unsigned int /gc 逐个确认替换。
+ 6. 用 SPC F 找文件，SPC t t 开终端运行程序，SPC g s 看 git 状态。
+
+ Note: 卡住时按 SPC c k 看快捷键总览，:checkhealth vimore 看环境。
+
+=================================================================
+=                       第32章 章节回顾                          =
+=================================================================
+
+ * 把菜单、LSP、格式化、寄存器、:g、终端串起来用一遍。
+ * SPC c k 和 :checkhealth vimore 是排错入口。
+
+=================================================================
+=                           33.1  完                            =
 =================================================================
 
  教程到这里就结束了。你已经知道：

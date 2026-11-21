@@ -2,7 +2,7 @@
 " Vimore
 " 作者: BiaoZyx
 " 邮箱: BiaoZyx@outlook.com
-" 版本: 3.40
+" 版本: 3.41
 " ============================================================
 "  _   ___
 " | | / (_)_ _  ___  _______
@@ -1717,7 +1717,7 @@ function! s:SetTitle() abort
         call extend(lines, s:MetaLines('', file, date))
         call extend(lines, [']]', ''])
     elseif ft == 'sh' || ft == 'bash'
-        let lines = ['#!/usr/bin/env bash']
+        let lines = ['#!/bin/sh']
         call extend(lines, s:MetaLines('# ', file, date))
         call add(lines, '')
     elseif ft == 'go'

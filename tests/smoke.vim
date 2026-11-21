@@ -65,7 +65,7 @@ call s:Check('更换后保留内容', getline(1), 'foo("bar")')
 bwipeout!
 bwipeout!
 execute 'edit ' . fnameescape(s:tmp . '/x.bash')
-call s:Check('bash 文件头', getline(1), '#!/usr/bin/env bash')
+call s:Check('bash 文件头', getline(1), '#!/bin/sh')
 bwipeout!
 
 " 智能拆分尊重 noexpandtab

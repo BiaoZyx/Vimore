@@ -1,17 +1,13 @@
 #!/bin/sh
-# @file    setup.sh
-# @author  BiaoZyx
-# @email   BiaoZyx@outlook.com
-# @date    2026-11-20
-# @brief   Vimore 安装脚本
-set -Eeuo pipefail
+# Vimore 安装脚本。纯 POSIX sh，可用 dash / ash / busybox 运行。
+set -eu
 
-ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT=$(cd "$(dirname "$0")" && pwd)
 TARGET="$HOME/.vim/vimore"
 RC="$HOME/.vimrc"
-VERSION="$(grep -m1 -E '^" .*: *[0-9]+\.[0-9]+' "$ROOT/Vimore.vimrc" 2>/dev/null | tr -cd '0-9.' || true)"
+VERSION=$(sed -n 's/^.*: *\([0-9][0-9]*\.[0-9][0-9]*\).*$/\1/p' "$ROOT/Vimore.vimrc" | head -n 1)
 
-MODE="full"
+MODE=full
 NO_BACKUP=0
 ASSUME_YES=0
 
@@ -37,11 +33,11 @@ Environment:
 EOF
 }
 
-while [[ $# -gt 0 ]]; do
+while [ $# -gt 0 ]; do
     case "$1" in
-        --minimal)    MODE="minimal"; shift ;;
-        --full)       MODE="full"; shift ;;
-        --uninstall)  MODE="uninstall"; shift ;;
+        --minimal)    MODE=minimal; shift ;;
+        --full)       MODE=full; shift ;;
+        --uninstall)  MODE=uninstall; shift ;;
         --no-backup)  NO_BACKUP=1; shift ;;
         -y|--yes)     ASSUME_YES=1; shift ;;
         -V|--version) echo "${VERSION:-unknown}"; exit 0 ;;
@@ -51,14 +47,20 @@ while [[ $# -gt 0 ]]; do
         *)            die "unexpected argument: $1" ;;
     esac
 done
-[[ $# -eq 0 ]] || die "unexpected argument: $1"
+[ $# -eq 0 ] || die "unexpected argument: $1"
 
 read_user_info() {
     AUTHOR="${VIMORE_AUTHOR:-}"
     EMAIL="${VIMORE_EMAIL:-}"
-    if [[ "$ASSUME_YES" == 0 && -t 0 ]]; then
-        [[ -n "$AUTHOR" ]] || read -r -p "Author name (empty to skip): " AUTHOR || true
-        [[ -n "$EMAIL" ]]  || read -r -p "Email (empty to skip): " EMAIL || true
+    if [ "$ASSUME_YES" = 0 ] && [ -t 0 ]; then
+        if [ -z "$AUTHOR" ]; then
+            printf 'Author name (empty to skip): '
+            read -r AUTHOR || true
+        fi
+        if [ -z "$EMAIL" ]; then
+            printf 'Email (empty to skip): '
+            read -r EMAIL || true
+        fi
     fi
 }
 
@@ -69,38 +71,41 @@ sed_escape() { printf '%s' "$1" | sed -e 's/[\\&|]/\\&/g' | tr -d '\n\r'; }
 vim_quote() { sed_escape "$(printf '%s' "$1" | sed "s/'/''/g")"; }
 
 set_author_email() {
-    local file="$1"
-    if [[ -n "$AUTHOR" ]]; then
-        sed -i -E "s|^let g:author = .*|let g:author = get(g:, 'author', '$(vim_quote "$AUTHOR")')|" "$file"
+    file=$1
+    tmp="${file}.tmp.$$"
+    if [ -n "$AUTHOR" ]; then
+        sed "s|^let g:author = .*|let g:author = get(g:, 'author', '$(vim_quote "$AUTHOR")')|" "$file" > "$tmp"
+        mv "$tmp" "$file"
     fi
-    if [[ -n "$EMAIL" ]]; then
-        sed -i -E "s|^let g:email[[:space:]]*=.*|let g:email  = get(g:, 'email',  '$(vim_quote "$EMAIL")')|" "$file"
+    if [ -n "$EMAIL" ]; then
+        sed "s|^let g:email.*|let g:email  = get(g:, 'email',  '$(vim_quote "$EMAIL")')|" "$file" > "$tmp"
+        mv "$tmp" "$file"
     fi
 }
 
 backup_rc() {
-    [[ "$NO_BACKUP" == 1 ]] && return 0
-    if [[ -e "$RC" || -L "$RC" ]]; then
-        local bak="${RC}.bak.$(date +%Y%m%d-%H%M%S)"
+    [ "$NO_BACKUP" = 1 ] && return 0
+    if [ -e "$RC" ] || [ -L "$RC" ]; then
+        bak="${RC}.bak.$(date +%Y%m%d-%H%M%S)"
         mv "$RC" "$bak"
         log "backed up $RC to $bak"
     fi
 }
 
 backup_target() {
-    [[ "$NO_BACKUP" == 1 ]] && return 0
-    if [[ -d "$TARGET" ]]; then
-        local bak="${TARGET}.bak.$(date +%Y%m%d-%H%M%S)"
+    [ "$NO_BACKUP" = 1 ] && return 0
+    if [ -d "$TARGET" ]; then
+        bak="${TARGET}.bak.$(date +%Y%m%d-%H%M%S)"
         mv "$TARGET" "$bak"
         log "backed up $TARGET to $bak"
     fi
 }
 
 backup_plugin() {
-    [[ "$NO_BACKUP" == 1 ]] && return 0
-    local plugin="$HOME/.vim/plugin/vimore-plugins.vim"
-    if [[ -e "$plugin" || -L "$plugin" ]]; then
-        local bak="${plugin}.bak.$(date +%Y%m%d-%H%M%S)"
+    [ "$NO_BACKUP" = 1 ] && return 0
+    plugin="$HOME/.vim/plugin/vimore-plugins.vim"
+    if [ -e "$plugin" ] || [ -L "$plugin" ]; then
+        bak="${plugin}.bak.$(date +%Y%m%d-%H%M%S)"
         mv "$plugin" "$bak"
         log "backed up LSP snippet to $bak"
     fi
@@ -132,23 +137,26 @@ case "$MODE" in
     full)
         read_user_info
         mkdir -p "$HOME/.vim"
-        [[ ! -e "$TARGET" || -d "$TARGET" ]] || die "$TARGET exists but is not a directory"
+        if [ -e "$TARGET" ] && [ ! -d "$TARGET" ]; then
+            die "$TARGET exists but is not a directory"
+        fi
         backup_target
         mkdir -p "$TARGET"
-        cp -a "$ROOT/Vimore.vimrc" "$ROOT/tutor" "$ROOT/VimMaze.vim" \
-              "$ROOT/.vim" "$ROOT/README.md" "$ROOT/README.en.md" "$TARGET/"
+        cp "$ROOT/Vimore.vimrc" "$ROOT/VimMaze.vim" "$ROOT/README.md" \
+           "$ROOT/README.en.md" "$TARGET/"
+        cp -R "$ROOT/tutor" "$ROOT/.vim" "$TARGET/"
         set_author_email "$TARGET/Vimore.vimrc"
         log "copied config to $TARGET"
 
         # 可选 LSP 片段用独立文件名，避免覆盖用户自己的 plugins.vim
-        if [[ -f "$ROOT/.vim/plugin/plugins.vim" ]]; then
+        if [ -f "$ROOT/.vim/plugin/plugins.vim" ]; then
             mkdir -p "$HOME/.vim/plugin"
             backup_plugin
             cp "$ROOT/.vim/plugin/plugins.vim" "$HOME/.vim/plugin/vimore-plugins.vim"
             log "installed optional LSP snippet: ~/.vim/plugin/vimore-plugins.vim"
         fi
 
-        if [[ -L "$RC" && "$(readlink "$RC")" == "$TARGET/Vimore.vimrc" ]]; then
+        if [ -L "$RC" ] && [ "$(readlink "$RC")" = "$TARGET/Vimore.vimrc" ]; then
             log "$RC already points to $TARGET/Vimore.vimrc"
         else
             backup_rc
@@ -160,20 +168,21 @@ case "$MODE" in
 
     uninstall)
         removed=0
-        if [[ -L "$RC" && "$(readlink "$RC")" == "$TARGET/Vimore.vimrc" ]]; then
+        if [ -L "$RC" ] && [ "$(readlink "$RC")" = "$TARGET/Vimore.vimrc" ]; then
             rm "$RC"; removed=1
-        elif [[ -f "$RC" ]] && cmp -s "$RC" "$ROOT/Vimore.vimrc"; then
+        elif [ -f "$RC" ] && cmp -s "$RC" "$ROOT/Vimore.vimrc"; then
             rm "$RC"; removed=1
         fi
-        [[ "$removed" == 1 ]] || die "$RC was not installed by this script; nothing removed"
+        [ "$removed" = 1 ] || die "$RC was not installed by this script; nothing removed"
         log "removed $RC"
-        answer="n"
-        if [[ "$ASSUME_YES" == 1 ]]; then
-            answer="y"
-        elif [[ -t 0 ]]; then
-            read -r -p "Also remove $TARGET? [y/N] " answer || true
+        answer=n
+        if [ "$ASSUME_YES" = 1 ]; then
+            answer=y
+        elif [ -t 0 ]; then
+            printf 'Also remove %s? [y/N] ' "$TARGET"
+            read -r answer || true
         fi
-        if [[ "$answer" == "y" || "$answer" == "Y" ]]; then
+        if [ "$answer" = y ] || [ "$answer" = Y ]; then
             rm -rf "$TARGET"
             rm -f "$HOME/.vim/plugin/vimore-plugins.vim"
             log "removed $TARGET"

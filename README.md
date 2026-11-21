@@ -145,8 +145,9 @@ ln -s ~/.vim/vimore/Vimore.vimrc ~/.vimrc
 @brief   简介
 ```
 
-Python 3 源码默认 UTF-8，不再生成 `# -*- coding: utf-8 -*-`；许可证全文在
-根目录 `LICENSE`（GPL-3.0），不重复贴到每个文件里。Go 的 package 按所在
+Python 3 源码默认 UTF-8，不再生成 `# -*- coding: utf-8 -*-`；Shell 脚本的
+shebang 用 `#!/bin/sh`（POSIX 标准）；许可证全文在根目录 `LICENSE`
+（GPL-3.0），不重复贴到每个文件里。Go 的 package 按所在
 目录推导，Java 的类名按文件名推导。
 
 作者和邮箱在 `.vimrc` 顶部配置：

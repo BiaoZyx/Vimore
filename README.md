@@ -44,9 +44,13 @@ Vimore 面向的是折腾意愿中等的 Vim 用户：想用 Vim，但不想为�
 仓库根目录自带 `setup.sh`，最省事：
 
 ```bash
-./setup.sh            # 完整安装（仓库 + 软链接）
-./setup.sh --minimal  # 只复制 Vimore.vimrc
+./setup.sh             # 完整安装（仓库 + 软链接）
+./setup.sh --minimal   # 只复制 Vimore.vimrc
 ./setup.sh --uninstall
+./setup.sh --no-backup # 覆盖时不生成 .bak
+./setup.sh -y          # 跳过询问
+./setup.sh --version   # 显示版本
+./setup.sh --help      # 查看全部选项
 ```
 
 脚本会询问作者名字和邮箱（也可用 `VIMORE_AUTHOR` / `VIMORE_EMAIL`

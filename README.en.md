@@ -26,6 +26,10 @@ VIMORE_AUTHOR='Your Name' VIMORE_EMAIL='you@example.com' ./setup.sh
 ./setup.sh --no-backup
 
 ./setup.sh --uninstall
+./setup.sh --no-backup  # no .bak files
+./setup.sh -y           # assume yes
+./setup.sh --version
+./setup.sh --help
 ```
 
 You can also just `cp Vimore.vimrc ~/.vimrc`.

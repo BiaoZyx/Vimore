@@ -1393,7 +1393,8 @@ function! s:FormatCandidates(ft, file) abort
         endif
     elseif a:ft =~? '^c$\|^cpp$\|^cuda$'
         if executable('clang-format')
-            call add(list, ['clang-format', 'clang-format -i ' . a:file])
+            " 强制 4 格缩进，避免 clang-format 默认 LLVM 风格的 2 格
+            call add(list, ['clang-format', 'clang-format -i --style=''{BasedOnStyle: LLVM, IndentWidth: 4, TabWidth: 4, UseTab: Never}'' ' . a:file])
         endif
     elseif a:ft == 'java'
         if executable('google-java-format')

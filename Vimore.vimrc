@@ -2,7 +2,7 @@
 " Vimore
 " 作者: BiaoZyx
 " 邮箱: BiaoZyx@outlook.com
-" 版本: 3.35
+" 版本: 3.36
 " ============================================================
 "  _   ___
 " | | / (_)_ _  ___  _______
@@ -2044,8 +2044,8 @@ let g:leader_menu = {
             \ 'Z': ['Unfold all',    ':normal! zR<CR>'],
             \ },
             \ 'y':  ['Yank to clipboard', ':normal! "+yy<CR>'],
-            \ 'p':  ['Paste after', ':call WlClipboardPaste() | normal! "+p<CR>'],
-            \ 'P':  ['Paste before', ':call WlClipboardPaste() | normal! "+P<CR>'],
+            \ 'p':  ['System paste after', ':call WlClipboardPaste() | normal! "+p<CR>'],
+            \ 'P':  ['System paste before', ':call WlClipboardPaste() | normal! "+P<CR>'],
             \ 's':  {
             \ 'name': 'Sort / clean',
             \ 'd': ['Delete blank lines', function('s:DeleteBlankLines')],

@@ -2,7 +2,7 @@
 " Vimore
 " 作者: BiaoZyx
 " 邮箱: BiaoZyx@outlook.com
-" 版本: 3.37
+" 版本: 3.38
 " ============================================================
 "  _   ___
 " | | / (_)_ _  ___  _______
@@ -965,7 +965,6 @@ set wildignore+=node_modules,__pycache__,*.git,*.svn
 set wildignore+=*.o,*.a,*.obj,*.class
 
 inoremap <silent><expr> <TAB> pumvisible() ? "\<C-n>" : "\<TAB>"
-inoremap <silent> <C-Space> <C-x><C-o>
 inoremap <silent><expr> <S-TAB> pumvisible() ? "\<C-p>" : "\<S-TAB>"
 
 " <CR> 智能拆分

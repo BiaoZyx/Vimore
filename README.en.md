@@ -51,7 +51,7 @@ external formatters/checkers for F8/F10.
 | `F7` | Toggle line wrap (current window) |
 | `F8` / `F10` | Async code check / format |
 | `F9` | Basic indent (`gg=G`) |
-| `<C-Space>` | Manually open completion |
+| `<C-x><C-o>` | Manually open completion (no C-Space: IME may use it) |
 | `SPC F` | Find file (falls back to netrw) |
 
 Inside the menu: `SPC w` Write, `SPC c` Maintain, `SPC b` Brackets,

@@ -94,7 +94,7 @@ ln -s ~/.vim/vimore/Vimore.vimrc ~/.vimrc
 ### 搜索
 
 - 增量搜索、智能大小写、高亮结果
-- `<C-Space>` 手动补全；可视模式 `p` 粘贴不会吞掉寄存器
+- `<C-x><C-o>` 手动补全（避开输入法占用的 `C-Space`）；可视模式 `p` 粘贴不会吞掉寄存器
 - `SPC F` 轻量文件搜索（无结果时回退到 netrw）
 - C 语言的指针 `*` 等操作符统一用蓝色（Operator）
 - `<Leader>hh` 取消高亮

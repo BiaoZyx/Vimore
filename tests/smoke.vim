@@ -33,6 +33,17 @@ call s:Check('命令 VimoreHealth', exists(':VimoreHealth'), 2)
 call s:Check('命令 VimoreKeys', exists(':VimoreKeys'), 2)
 call s:Check('updatetime', &updatetime, 250)
 call s:Check('splitright/splitbelow', &splitright == 1 && &splitbelow == 1, 1)
+" 缩进按语言分配
+for [file, ft, width, expand] in [
+      \ ['/tmp/vimore-indent.json', 'json', 2, 1],
+      \ ['/tmp/vimore-indent.py', 'python', 4, 1],
+      \ ['/tmp/vimore-indent.go', 'go', 4, 0],
+      \ ['/tmp/vimore-indent.mk', 'make', 8, 0],
+      \ ]
+  execute 'edit ' . fnameescape(file)
+  execute 'setlocal filetype=' . ft
+  call s:Check('缩进 ' . ft, &tabstop == width && &shiftwidth == width && &expandtab == expand, 1)
+endfor
 
 " 文件头：Go 按目录推导 package，附加后缀也支持
 call mkdir(s:tmp . '/my-proj', 'p')

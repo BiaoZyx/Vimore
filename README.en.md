@@ -55,6 +55,9 @@ external formatters/checkers for F8/F10.
 | `F7` | Toggle line wrap (current window) |
 | `F8` / `F10` | Async code check / format |
 | `F9` | Basic indent (`gg=G`) |
+
+Indentation: 2 spaces for Web/config/scripts, 4 for systems languages,
+Go uses tabs displayed at 4, Makefile tabs at 8; 6 is not a base width.
 | `<C-x><C-o>` | Manually open completion (no C-Space: IME may use it) |
 | `SPC F` | Find file (falls back to netrw) |
 

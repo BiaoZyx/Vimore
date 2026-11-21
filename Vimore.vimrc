@@ -387,13 +387,14 @@ augroup VimoreWrap
     autocmd FileType,BufEnter,WinEnter * call s:SetWrapOptions()
 augroup END
 
-" 各文件类型自定义缩进
+" 各文件类型缩进：2 格给 Web/配置/脚本，4 格给系统语言，
+" Go/Makefile 用字面 tab，6 格不作为基础宽度（只用于续行）
 augroup VimoreIndent
     autocmd!
-    autocmd FileType python,sh setlocal tabstop=4 shiftwidth=4 softtabstop=4 expandtab
-    autocmd FileType go setlocal tabstop=4 shiftwidth=4 softtabstop=4 noexpandtab
-    autocmd FileType javascript,typescript,html,css,json,yaml,markdown setlocal tabstop=2 shiftwidth=2 softtabstop=2 expandtab
-    autocmd FileType c,cpp,java,rust setlocal tabstop=4 shiftwidth=4 softtabstop=4 expandtab
+    autocmd FileType yaml,json,jsonc,html,css,scss,less,javascript,typescript,javascriptreact,typescriptreact,vue,svelte,astro,ruby,markdown,sh,bash,terraform,graphql setlocal tabstop=2 shiftwidth=2 softtabstop=2 expandtab
+    autocmd FileType python,c,cpp,java,rust,lua,zig,php,cs,kotlin,sql,vim setlocal tabstop=4 shiftwidth=4 softtabstop=4 expandtab
+    autocmd FileType go,gomod,gowork setlocal tabstop=4 shiftwidth=4 softtabstop=0 noexpandtab
+    autocmd FileType make setlocal tabstop=8 shiftwidth=8 softtabstop=0 noexpandtab
 augroup END
 
 " ============================================================

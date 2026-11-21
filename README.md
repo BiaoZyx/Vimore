@@ -92,6 +92,7 @@ ln -s ~/.vim/vimore/Vimore.vimrc ~/.vimrc
 - 智能括号 / 引号补全：`(` `[` `"` 自动配对，`<` 只在 HTML/XML 里配对，`{` 除 C/C++/CSS 外配对
 - 智能退格：成对删除 `()` `[]` `{}` `""` `''`
 - 括号操作：`<Leader>b d` 只删包裹符号、`<Leader>b c` 换符号、`<Leader>b a` 给选区加括号；连内容删用 `daX`
+- 缩进按语言分配：Web/配置/脚本 2 格，系统语言 4 格，Go 用 tab（显示 4），Makefile tab 8；6 格不作为基础宽度
 - `<` / `>` 保持 Vim 默认（单按缩进当前行），可视模式缩进选区并保持选中
 - 快速注释：`<Leader>/`，支持 Python / C / HTML / CSS / Lua 等
 

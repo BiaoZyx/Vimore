@@ -181,7 +181,7 @@ Vim 版**不需要** `colors/` 目录，单文件就是完全体。
 - `:VimoreMenu` — 直接用命令打开 Leader 菜单
 - `:VimoreKeys` — 新缓冲区里按模式列出所有键位
 - `:VimoreHealth` — 彩色文字标记的自检（版本、配色、工具、随附文件）
-- `:VimoreTutor` — 打开 33 章的 Vimore 交互式教程（`tutor/vim.tutor.txt` 是 32 章的原版 Vim 教程）
+- `:VimoreTutor` — 打开 22 章的 Vimore 交互式教程（`tutor/vim.tutor.txt` 是 32 章的原版 Vim 教程）
 - `:VimMaze` — 打开仓库根目录的迷宫小游戏（按 `?` 看帮助，`q` 退出）
 - `:checkhealth` 之外的健康检查：`vim --clean -Nu Vimore.vimrc -c 'messages' -c 'qa!'`
 
